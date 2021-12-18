@@ -1,16 +1,16 @@
-<template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+<template lang="pug">
+#hdr(style="border:1px solid black;margin:10px;")
+  label(for="srch") Search:
+  input(v-model="searchStr" name="srch")
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
 
 export default {
   name: 'App',
-  components: {
-    HelloWorld
-  }
+  data() { return {
+      searchStr: '',
+  }}
 }
 </script>
 
@@ -18,9 +18,5 @@ export default {
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+  -moz-osx-font-smoothing: grayscale;}
 </style>
