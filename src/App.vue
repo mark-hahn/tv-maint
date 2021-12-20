@@ -5,6 +5,7 @@
 </template>
 
 <script>
+import * as emby from "./emby.js"
 
 export default {
   name: 'App',
@@ -12,6 +13,8 @@ export default {
       searchStr: '',
   }}
 }
+emby.init();
+
 </script>
 
 <style>
