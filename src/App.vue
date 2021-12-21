@@ -10,17 +10,17 @@ import * as emby from "./emby.js"
 export default {
   name: 'App',
   data() { return {
-      searchStr: '',
-  }}
+    shows: [],
+    searchStr: '',
+  }},
+  mounted() {
+    (async() => {
+      await emby.init();
+      this.shows = await emby.getShows(500);
+      console.log(this.shows.value);
+    })();
+  }
 }
-// need async features
-const doIt = async () => {
-  await emby.init();
-  await emby.shows();
-
-
-}
-doIt();
 </script>
 
 <style>

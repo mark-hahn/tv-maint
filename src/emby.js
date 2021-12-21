@@ -8,6 +8,8 @@ const authHdr   = 'UserId="894c752d448f45a3a1260ccaabd0adff", ' +
                   'Client="MyClient", Device="myDevice", '      +
                   'DeviceId="123456", Version="1.0.0"';
 
+let token = '';
+
 const getToken = async (name, pwd) => {
   const config = {
     method: 'post',
@@ -15,39 +17,32 @@ const getToken = async (name, pwd) => {
     headers: { Authorization: authHdr },
     data: { Username: name, Pw: pwd },
   };
-  const res = await axios(config);
-  const token = res.data.AccessToken;
-  return token;
+  const showsRes = await axios(config);
+  token = showsRes.data.AccessToken;
 }
-
-let token = '';
 
 export async function init() {
-  token = await getToken('MARK', '90-NBVcvbasd');
-  // console.log({token});
-  // axios.get(u+'/openapi');
+  await getToken('MARK', '90-NBVcvbasd');
 }
 
-export async function shows() {
+export async function getShows(startIdx) {
   console.log("loading shows");
-  const res = await axios.get(getSeriesUrl());
-  const totRecCount = res.data.TotalRecordCount;
+  const showsRes = await axios.get(getShowsUrl(startIdx));
+  const totRecCount = showsRes.data.TotalRecordCount;
   const shows = [];
-  for(let key in res.data.Items) {
-    const item = res.data.Items[key];
-    for(let key in item) {
-      Object.assign(item, item.UserData);
-      delete item.UserData;
-    }
+  for(let key in showsRes.data.Items) {
+    const item = showsRes.data.Items[key];
+    Object.assign(item, item.UserData);
+    delete item.UserData;
     shows.push( _.pick(item, [
       'Name', 'Id', 'IsFavorite', 
       'PlayCount', 'Played', 'UnplayedItemCount'])
     );
   }
-  console.log({res, totRecCount, shows});
+  return {shows, totRecCount};
 }
 
-function getSeriesUrl () {
+function getShowsUrl (startIdx) {
   return `http://hahnca.com:8096/emby/
           Users/894c752d448f45a3a1260ccaabd0adff
   /Items
@@ -55,17 +50,15 @@ function getSeriesUrl () {
     &SortOrder=Ascending
     &IncludeItemTypes=Series
     &Recursive=true
-    &Fields=BasicSyncInfo%2CCanDelete%2CPrimaryImageAspectRatio
-    &ImageTypeLimit=1
-    &EnableImageTypes=Primary%2CBackdrop%2CThumb
-    &StartIndex=0
+    &Fields=BasicSyncInfo%2CCanDelete
+    &StartIndex=${startIdx}
     &ParentId=4514ec850e5ad0c47b58444e17b6346c
-    &GroupItemsIntoCollections=true
+    &GroupItemsIntoCollections=false
     &Limit=10
     &X-Emby-Client=Emby%20Web
     &X-Emby-Device-Name=Chrome
     &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
-    &X-Emby-Client-Version=4.6.4.0
+    &X-Emby-Client-Version=1.0.0
     &X-Emby-Token=${token}
   `.replace(/\s*/g, "");
 }
