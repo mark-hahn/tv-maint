@@ -33,7 +33,7 @@ export async function init() {
   await getToken('MARK', '90-NBVcvbasd');
 }
 
-export async function getShows(startIdx = 0, limit = 1e9) {
+export async function getShows(startIdx = 0, limit = 10000) {
   console.log("loading shows");
   const showsRes = await axios.get(getShowsUrl(startIdx, limit));
   const shows = [];
