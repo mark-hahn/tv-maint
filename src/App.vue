@@ -13,8 +13,14 @@ export default {
       searchStr: '',
   }}
 }
-emby.init();
+// need async features
+const doIt = async () => {
+  await emby.init();
+  await emby.shows();
 
+
+}
+doIt();
 </script>
 
 <style>
