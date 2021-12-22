@@ -54,7 +54,9 @@ export async function toggleFav(id, isFav) {
     method: (isFav ? 'delete' : 'post'),
     url:     setFaveUrl(id),
   };
-  const favRes = await axios(config);
+  let favRes;
+  try { favRes = await axios(config); }
+  catch (e) { return isFav; }
   return (favRes.status == 200 ? favRes.data.IsFavorite : isFav);
 }
 
@@ -64,12 +66,8 @@ export async function togglePickUp(id, pickup) {
     url:    `http://hahnca.com/tv-maint/pickup?id=${id}`
   };
   let pickUpRes;
-  try {
-    pickUpRes = await axios(config);
-  }
-  catch (e) {
-    return pickup;
-  }
+  try { pickUpRes = await axios(config); }
+  catch (e) { return pickup; }
   console.log(pickUpRes);
   return (pickUpRes.status == 200 ? pickUpRes.data.pickup : pickup);
 }

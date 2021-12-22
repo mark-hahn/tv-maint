@@ -20,7 +20,7 @@ div
             :class="{clsRed: show.IsFavorite, clsDim: !show.IsFavorite}")
       td(style="width:16px;" @click="togglePickUp(show)")
         font-awesome-icon(icon="arrow-down"
-            :class="{clsGrn: show.togglePickUp, clsDim: !show.togglePickUp}")
+            :class="{clsGrn: show.pickup, clsDim: !show.pickup}")
 
 </template>
 
@@ -96,6 +96,7 @@ export default {
 
     togglePickUp (show){(async () => {
       show.pickup = await emby.togglePickUp(show.Id, show.pickup);
+      console.log(show.pickup);
     })()},
 
   },
