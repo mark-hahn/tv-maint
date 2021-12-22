@@ -2,12 +2,17 @@
 div
   #hdr(style="border:1px solid black;")
     div(style="margin:5px 10px;")
-      input(v-model="searchStr" @change="search"
-            style="border:1px solid black;")
-      button(@click="search") search
-      button(@click="clrSrch" style="margin-left:10px") 
+      input(v-model="searchStr" @change="select"
+            style="border:1px solid black; width:50px;")
+      button(@click="select") search
+      select(v-model="filterStr" @change="select" 
+             style="margin-left:10px")
+        option(value="No Filter") No Filter
+        option Favorites
+        option Not Favorites
+      button(@click="showAll" style="margin-left:10px") 
         | Show All
-  table(style="margin:10px; width:100%")
+  table(style="margin:10px; width:95%")
     tr(v-for="show in shows")
       td {{show.Name.substring(0,20)}}
       td(style="width:16px;")
@@ -30,6 +35,7 @@ export default {
   data() { return {
     shows: [],
     searchStr: 'great',
+    filterStr: 'No Filter',
   }},
 
   components: {
@@ -37,16 +43,22 @@ export default {
   },
 
   methods: {
-    search () {(async () => {
-      const str = this.searchStr.toLowerCase();
+    select () {(async () => {
+      const srchStr = this.searchStr.toLowerCase();
+      const fltrStr = this.filterStr;
       const shows = (await emby.getShows()).shows
-        .filter(show => show.Name.toLowerCase().includes(str));
-      console.log(shows);
+        .filter( show =>
+           (srchStr == '' || show.Name.toLowerCase().includes(srchStr)) && 
+           ( show.IsFavorite || fltrStr != "Favorites")                 &&
+           (!show.IsFavorite || fltrStr != "Not Favorites")     
+        );
+      // console.log(shows);
       this.shows = shows;
     })()},
 
-    clrSrch () {(async () => {
+    showAll () {(async () => {
       this.searchStr = "";
+      this.filterStr = "No Filter";
       this.shows = (await emby.getShows()).shows;
     })()},
   },

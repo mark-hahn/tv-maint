@@ -34,17 +34,15 @@ export async function init() {
 }
 
 export async function getShows(startIdx = 0, limit = 10000) {
-  console.log("loading shows");
-  const showsRes = await axios.get(getShowsUrl(startIdx, limit));
+  const showsRes = 
+        await axios.get(getShowsUrl(startIdx, limit));
   const shows = [];
   for(let key in showsRes.data.Items) {
     const item = showsRes.data.Items[key];
     Object.assign(item, item.UserData);
     delete item.UserData;
-    for(const k of ['DateCreated', 'PremiereDate']) {
-      if(item[k])
-      item[k] = item[k].replace(/T.*/, '');
-    }
+    for(const k of ['DateCreated', 'PremiereDate'])
+      if(item[k]) item[k] = item[k].replace(/T.*/, '');
     shows.push(pick(item, fields));
   }
   const totRecCount = showsRes.data.TotalRecordCount;
