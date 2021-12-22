@@ -55,8 +55,17 @@ export async function toggleFav(id, isFav) {
     url:     setFaveUrl(id),
   };
   const favRes = await axios(config);
-  console.log(favRes);
   return (favRes.status == 200 ? favRes.data.IsFavorite : isFav);
+}
+
+export async function togglePickUp(id, pickup) {
+  const config = {
+    method: (pickup ? 'delete' : 'post'),
+    url:    `hahnca.com/tv-maint/pickup?id=${id})`
+  };
+  const pickUpRes = await axios(config);
+  console.log(pickUpRes);
+  return (pickUpRes.status == 200 ? pickUpRes.data.pickup : pickup);
 }
 
 function setFaveUrl (id) {

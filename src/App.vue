@@ -18,16 +18,20 @@ div
       td(style="width:16px;" @click="toggleFav(show)")
         font-awesome-icon(icon="heart"
             :class="{clsRed: show.IsFavorite, clsDim: !show.IsFavorite}")
+      td(style="width:16px;" @click="togglePickUp(show)")
+        font-awesome-icon(icon="arrow-down"
+            :class="{clsGrn: show.togglePickUp, clsDim: !show.togglePickUp}")
 
 </template>
 
 <script>
 import * as emby from "./emby.js"
 
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { faHeart, faCoffee } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon }      from '@fortawesome/vue-fontawesome'
+import { library }              from '@fortawesome/fontawesome-svg-core'
+import { faHeart, faArrowDown } from '@fortawesome/free-solid-svg-icons'
 library.add(faHeart);
+library.add(faArrowDown);
 
 let srchTimeout = null;
 const getEmbyUrl = (id) => 
@@ -90,6 +94,10 @@ export default {
       show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
     })()},
 
+    togglePickUp (show){(async () => {
+      show.pickup = await emby.togglePickUp(show.Id, show.pickup);
+    })()},
+
   },
 
   mounted() { (async() => {
@@ -109,6 +117,7 @@ export default {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;}
   span {font-size: 48px; color: Dodgerblue}
+  .clsGrn {color:green}
   .clsRed {color:#f88}
   .clsDim {color:#e8e8e8}
 
