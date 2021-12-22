@@ -49,6 +49,28 @@ export async function getShows(startIdx = 0, limit = 10000) {
   return {shows, totRecCount};
 }
 
+export async function toggleFav(id, isFav) {
+  const config = {
+    method: (isFav ? 'delete' : 'post'),
+    url:     setFaveUrl(id),
+  };
+  const favRes = await axios(config);
+  console.log(favRes);
+  return (favRes.status == 200 ? favRes.data.IsFavorite : isFav);
+}
+
+function setFaveUrl (id) {
+  return `http://hahnca.com:8096 / emby
+          / Users / 894c752d448f45a3a1260ccaabd0adff 
+          / FavoriteItems / ${id}
+    ?X-Emby-Client=Emby Web
+    &X-Emby-Device-Name=Chrome
+    &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
+    &X-Emby-Client-Version=1.0.0
+    &X-Emby-Token=${token}
+  `.replace(/\s*/g, "");
+}
+
 function getShowsUrl (startIdx, limit) {
   return `http://hahnca.com:8096 / emby
           / Users / 894c752d448f45a3a1260ccaabd0adff / Items

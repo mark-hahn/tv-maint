@@ -15,9 +15,9 @@ div
   table(style="margin:10px; width:95%")
     tr(v-for="show in shows")
       td(@click="showInEmby(show.Id)") {{show.Name.substring(0,20)}}
-      td(style="width:16px;")
-        font-awesome-icon(v-if="show.IsFavorite" 
-                          style="color:#f88" icon="heart")
+      td(style="width:16px;" @click="toggleFav(show)")
+        font-awesome-icon(icon="heart"
+            :class="{clsRed: show.IsFavorite, clsDim: !show.IsFavorite}")
 
 </template>
 
@@ -83,10 +83,13 @@ export default {
     })()},
 
     showInEmby (id) {
-      const url = getEmbyUrl(id);
-      console.log(url);
-      window.open(url, id);
+      window.open(getEmbyUrl(id), id);
     },
+
+    toggleFav (show){(async () => {
+      show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
+    })()},
+
   },
 
   mounted() { (async() => {
@@ -99,12 +102,14 @@ export default {
 
 <style>
   tr {outline: thin solid;}
-  tr:nth-child(even) {background-color: #f0f0f0;}
+  tr:nth-child(even) {background-color: #f8f8f8;}
   td {outline: thin solid;}
   #app {
     font-family: Avenir, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;}
   span {font-size: 48px; color: Dodgerblue}
+  .clsRed {color:#f88}
+  .clsDim {color:#e8e8e8}
 
 </style>
