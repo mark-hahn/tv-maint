@@ -61,9 +61,15 @@ export async function toggleFav(id, isFav) {
 export async function togglePickUp(id, pickup) {
   const config = {
     method: (pickup ? 'delete' : 'post'),
-    url:    `hahnca.com/tv-maint/pickup?id=${id})`
+    url:    `http://hahnca.com/tv-maint/pickup?id=${id}`
   };
-  const pickUpRes = await axios(config);
+  let pickUpRes;
+  try {
+    pickUpRes = await axios(config);
+  }
+  catch (e) {
+    return pickup;
+  }
   console.log(pickUpRes);
   return (pickUpRes.status == 200 ? pickUpRes.data.pickup : pickup);
 }
