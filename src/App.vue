@@ -2,7 +2,7 @@
 div
   #hdr(style="border:1px solid black;")
     div(style="margin:5px 10px;")
-      input(v-model="searchStr" @change="select"
+      input(v-model="searchStr" @input="srchInput" @change="select"
             style="border:1px solid black; width:50px;")
       button(@click="select") search
       select(v-model="filterStr" @change="select" 
@@ -14,7 +14,7 @@ div
         | Show All
   table(style="margin:10px; width:95%")
     tr(v-for="show in shows")
-      td {{show.Name.substring(0,20)}}
+      td(@click="showInEmby(show.Id)") {{show.Name.substring(0,20)}}
       td(style="width:16px;")
         font-awesome-icon(v-if="show.IsFavorite" 
                           style="color:#f88" icon="heart")
@@ -28,6 +28,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faHeart, faCoffee } from '@fortawesome/free-solid-svg-icons'
 library.add(faHeart);
+
+let srchTimeout = null;
 
 export default {
   name: 'App',
@@ -43,7 +45,22 @@ export default {
   },
 
   methods: {
+    chkSrchTimeout () {
+      if(srchTimeout) {
+        clearTimeout(srchTimeout);
+        srchTimeout = null;
+      }
+    },
+
+    srchInput () {
+      this.chkSrchTimeout();
+      srchTimeout = setTimeout(()=> {
+        this.select();
+      }, 300);
+    },
+
     select () {(async () => {
+      this.chkSrchTimeout();
       const srchStr = this.searchStr.toLowerCase();
       const fltrStr = this.filterStr;
       const shows = (await emby.getShows()).shows
@@ -52,11 +69,17 @@ export default {
            ( show.IsFavorite || fltrStr != "Favorites")                 &&
            (!show.IsFavorite || fltrStr != "Not Favorites")     
         );
-      // console.log(shows);
       this.shows = shows;
     })()},
 
     showAll () {(async () => {
+      this.searchStr = "";
+      this.filterStr = "No Filter";
+      this.shows = (await emby.getShows()).shows;
+    })()},
+
+    showInEmby () {(async () => {
+      // console.log(inb);
       this.searchStr = "";
       this.filterStr = "No Filter";
       this.shows = (await emby.getShows()).shows;
