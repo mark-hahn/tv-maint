@@ -13,7 +13,7 @@ div
       button(@click="showAll" style="margin-left:10px") 
         | Show All
   table(style="margin:10px; width:95%")
-    tr(v-for="show in shows")
+    tr(v-for="show in shows" key="show.Id")
       td(@click="showInEmby(show.Id)") {{show.Name.substring(0,20)}}
       td(style="width:16px;" @click="toggleFav(show)")
         font-awesome-icon(icon="heart"
@@ -32,6 +32,8 @@ import { library }              from '@fortawesome/fontawesome-svg-core'
 import { faHeart, faArrowDown } from '@fortawesome/free-solid-svg-icons'
 library.add(faHeart);
 library.add(faArrowDown);
+
+let allShows = [];
 
 let srchTimeout = null;
 const getEmbyUrl = (id) => 
@@ -71,13 +73,12 @@ export default {
       this.chkSrchTimeout();
       const srchStr = this.searchStr.toLowerCase();
       const fltrStr = this.filterStr;
-      const shows = (await emby.getShows()).shows
+      this.shows = allShows
         .filter( show =>
            (srchStr == '' || show.Name.toLowerCase().includes(srchStr)) && 
            ( show.IsFavorite || fltrStr != "Favorites")                 &&
            (!show.IsFavorite || fltrStr != "Not Favorites")     
         );
-      this.shows = shows;
     })()},
 
     showAll () {(async () => {
@@ -98,28 +99,27 @@ export default {
       show.pickup = await emby.togglePickUp(show.Id, show.pickup);
       console.log(show.pickup);
     })()},
-
   },
 
   mounted() { (async() => {
     await emby.init();
-    this.shows = (await emby.getShows(0,5)).shows;
-  })();
-  },
+    allShows = (await emby.loadAllShows(0,5));
+    this.shows = allShows;
+  })()},
 }
 </script>
 
 <style>
   tr {outline: thin solid;}
-  tr:nth-child(even) {background-color: #f8f8f8;}
+  tr:nth-child(even) {background-color: #f4f4f4;}
   td {outline: thin solid;}
   #app {
     font-family: Avenir, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;}
   span {font-size: 48px; color: Dodgerblue}
-  .clsGrn {color:green}
-  .clsRed {color:#f88}
-  .clsDim {color:#e8e8e8}
+  .clsGrn {color:#2f2}
+  .clsRed {color:#f66}
+  .clsDim {color:#ddd}
 
 </style>

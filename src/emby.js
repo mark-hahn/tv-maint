@@ -9,7 +9,6 @@ const authHdr = 'UserId="894c752d448f45a3a1260ccaabd0adff", ' +
 const fields = ['Name', 'Id', 'IsFavorite', 'Played', 
                 'UnplayedItemCount', "DateCreated", "ExternalUrls",
                 "Genres","Overview","Path","People","PremiereDate"];
-
 let token = '';
 
 const pick = (obj, props) => 
@@ -72,6 +71,52 @@ export async function togglePickUp(id, pickup) {
   return (pickUpRes.status == 200 ? pickUpRes.data.pickup : pickup);
 }
 
+export async function loadAllShows() {
+  const showsRes = await axios.get(getShowsUrl());
+  const shows = [];
+  for(let key in showsRes.data.Items) {
+    const item = showsRes.data.Items[key];
+    Object.assign(item, item.UserData);
+    delete item.UserData;
+    for(const k of ['DateCreated', 'PremiereDate'])
+      if(item[k]) item[k] = item[k].replace(/T.*/, '');
+    shows.push(pick(item, fields));
+  }
+  const showNames = shows.map(show => show.Name);
+  // console.log(showNames);
+  const configSeries = (await axios.get(
+        'http://hahnca.com:8734/config-series.json')).data;
+  for(let series of configSeries) {
+    // console.log(series);
+    let gotPickup = false;
+    for(let showName of showNames) {
+      if(showName == series) {
+        const show = shows.find(show => show.Name == showName);
+        show.pickup = true;
+        gotPickup = true;
+        // console.log('pickup', series);
+      }
+    }
+    if(!gotPickup) {
+      shows.push( {
+        Name:  series,
+        Pickup:true,
+        Id:   'pkup-' + Date.now(),
+      });
+      // console.log('added', series);
+    }
+  }
+  shows.sort((a,b) => {
+    const aname = a.Name.replace(/The\s/i, '');
+    const bname = b.Name.replace(/The\s/i, '');
+    return (aname > bname ? +1 : -1);
+  });
+  console.log('all shows loaded');
+  // console.log(shows);
+  // console.log(shows.filter(show => show.pickup));
+  return shows;
+}
+
 function setFaveUrl (id) {
   return `http://hahnca.com:8096 / emby
           / Users / 894c752d448f45a3a1260ccaabd0adff 
@@ -84,7 +129,7 @@ function setFaveUrl (id) {
   `.replace(/\s*/g, "");
 }
 
-function getShowsUrl (startIdx, limit) {
+function getShowsUrl (startIdx=0, limit=10000) {
   return `http://hahnca.com:8096 / emby
           / Users / 894c752d448f45a3a1260ccaabd0adff / Items
     ?SortBy=SortName
