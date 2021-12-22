@@ -30,6 +30,10 @@ import { faHeart, faCoffee } from '@fortawesome/free-solid-svg-icons'
 library.add(faHeart);
 
 let srchTimeout = null;
+const getEmbyUrl = (id) => 
+  `http://hahnca.com:8096/web/index.html
+   #!/item?id=${id}&serverId=ae3349983dbe45d9aa1d317a7753483e`
+   .replace(/\s*/g, "");
 
 export default {
   name: 'App',
@@ -78,12 +82,11 @@ export default {
       this.shows = (await emby.getShows()).shows;
     })()},
 
-    showInEmby () {(async () => {
-      // console.log(inb);
-      this.searchStr = "";
-      this.filterStr = "No Filter";
-      this.shows = (await emby.getShows()).shows;
-    })()},
+    showInEmby (id) {
+      const url = getEmbyUrl(id);
+      console.log(url);
+      window.open(url, id);
+    },
   },
 
   mounted() { (async() => {
