@@ -32,22 +32,6 @@ export async function init() {
   await getToken('MARK', '90-NBVcvbasd');
 }
 
-export async function getShows(startIdx = 0, limit = 10000) {
-  const showsRes = 
-        await axios.get(getShowsUrl(startIdx, limit));
-  const shows = [];
-  for(let key in showsRes.data.Items) {
-    const item = showsRes.data.Items[key];
-    Object.assign(item, item.UserData);
-    delete item.UserData;
-    for(const k of ['DateCreated', 'PremiereDate'])
-      if(item[k]) item[k] = item[k].replace(/T.*/, '');
-    shows.push(pick(item, fields));
-  }
-  const totRecCount = showsRes.data.TotalRecordCount;
-  return {shows, totRecCount};
-}
-
 export async function toggleFav(id, isFav) {
   const config = {
     method: (isFav ? 'delete' : 'post'),
@@ -59,16 +43,16 @@ export async function toggleFav(id, isFav) {
   return (favRes.status == 200 ? favRes.data.IsFavorite : isFav);
 }
 
-export async function togglePickUp(id, pickup) {
+export async function togglePickUp(name, pickup) {
   const config = {
     method: (pickup ? 'delete' : 'post'),
-    url:    `http://hahnca.com/tv-maint/pickup?id=${id}`
+    url:    `http://hahnca.com/tv/pickup/` + name,
   };
   let pickUpRes;
   try { pickUpRes = await axios(config); }
   catch (e) { return pickup; }
-  console.log(pickUpRes);
-  return (pickUpRes.status == 200 ? pickUpRes.data.pickup : pickup);
+  console.log(name, pickup, pickUpRes);
+  return (pickUpRes.status == 200 ? pickUpRes.data : pickup);
 }
 
 export async function loadAllShows() {
@@ -85,7 +69,7 @@ export async function loadAllShows() {
   const showNames = shows.map(show => show.Name);
   // console.log(showNames);
   const configSeries = (await axios.get(
-        'http://hahnca.com:8734/config-series.json')).data;
+        'http://hahnca.com/tv/config-series.json')).data;
   for(let series of configSeries) {
     // console.log(series);
     let gotPickup = false;

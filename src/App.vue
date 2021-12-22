@@ -2,7 +2,7 @@
 div
   #hdr(style="border:1px solid black;")
     div(style="margin:5px 10px;")
-      input(v-model="searchStr" @input="srchInput" @change="select"
+      input(v-model="searchStr" @input="select"
             style="border:1px solid black; width:50px;")
       button(@click="select") search
       select(v-model="filterStr" @change="select" 
@@ -35,7 +35,6 @@ library.add(faArrowDown);
 
 let allShows = [];
 
-let srchTimeout = null;
 const getEmbyUrl = (id) => 
   `http://hahnca.com:8096/web/index.html
    #!/item?id=${id}&serverId=ae3349983dbe45d9aa1d317a7753483e`
@@ -55,22 +54,8 @@ export default {
   },
 
   methods: {
-    chkSrchTimeout () {
-      if(srchTimeout) {
-        clearTimeout(srchTimeout);
-        srchTimeout = null;
-      }
-    },
-
-    srchInput () {
-      this.chkSrchTimeout();
-      srchTimeout = setTimeout(()=> {
-        this.select();
-      }, 300);
-    },
 
     select () {(async () => {
-      this.chkSrchTimeout();
       const srchStr = this.searchStr.toLowerCase();
       const fltrStr = this.filterStr;
       this.shows = allShows
@@ -84,7 +69,7 @@ export default {
     showAll () {(async () => {
       this.searchStr = "";
       this.filterStr = "No Filter";
-      this.shows = (await emby.getShows()).shows;
+      this.shows = allShows;
     })()},
 
     showInEmby (id) {
@@ -96,8 +81,8 @@ export default {
     })()},
 
     togglePickUp (show){(async () => {
-      show.pickup = await emby.togglePickUp(show.Id, show.pickup);
-      console.log(show.pickup);
+      show.pickup = await emby.togglePickUp(show.Name, show.pickup);
+      console.log('show.pickup', show.pickup);
     })()},
   },
 
