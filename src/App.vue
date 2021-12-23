@@ -2,6 +2,8 @@
 div
   #hdr(style="border:1px solid black; background-color:#ccc; position:fixed; left:0; top:0;")
     div(style="margin:3px 10px;")
+      div(style="display:inline-block;margin-right:10px; font-size:14px; font-weight:bold; color:blue") 
+       | TV Series
       input(v-model="searchStr" @input="select"
             style="border:1px solid black; width:80px;")
       button(@click="select") search
