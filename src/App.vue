@@ -36,16 +36,25 @@ div
           font-awesome-icon(:icon="['far', 'clock']"
             v-bind:style="(hour(show) ? {color:'purple'} : {color:'#ddd'  })")
 
-        td(style="width:50px; text-align:right;") 
-              | {{show.UnplayedItemCount ? show.UnplayedItemCount+' u&nbsp' : ''}}
+        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
+          font-awesome-icon(:icon="['fas', 'check']"
+            v-bind:style="(played(show) ? {color:'lime'} : {color:'#ddd'  })")
+
+        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
+          font-awesome-icon(:icon="['fas', 'plus']"
+            v-bind:style="(show.UnplayedItemCount>0 ? {color:'aqua'} : {color:'#ddd'  })")
 
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'heart']"
-              :class="{clsRed: show.IsFavorite, clsDim: !show.IsFavorite}")
+            v-bind:style="(show.IsFavorite>0 ? {color:'red'} : {color:'#ddd'  })")
               
         td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
           font-awesome-icon(icon="arrow-down"
-              :class="{clsGrn: show.Pickup, clsDim: !show.Pickup}")
+            v-bind:style="(show.Pickup ? {color:'green'} : {color:'#ddd'  })")
+
+        td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
+          font-awesome-icon(icon="database"
+            v-bind:style="(database(show) ? {color:'maroon'} : {color:'#ddd'  })")
 
 </template>
 
@@ -53,7 +62,7 @@ div
 
 /*
   comedy             laugh-beam              teal
-  drama              sad-tear                blue
+  drama              sad-cry                 blue
   RunTimeTicks       clock                   purple
   Played             check                   lime
   UnplayedItemCount  plus                    aqua
@@ -64,12 +73,12 @@ div
 
 import * as emby from "./emby.js";
 
-import {FontAwesomeIcon}       from "@fortawesome/vue-fontawesome";
-import {library}               from "@fortawesome/fontawesome-svg-core";
+import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
+import {library}         from "@fortawesome/fontawesome-svg-core";
 import {faLaughBeam, faSadCry, faClock, faHeart}  
-                               from "@fortawesome/free-regular-svg-icons";
+                         from "@fortawesome/free-regular-svg-icons";
 import {faCheck, faPlus, faArrowDown, faDatabase} 
-                               from "@fortawesome/free-solid-svg-icons";
+                         from "@fortawesome/free-solid-svg-icons";
 library.add([faLaughBeam, faSadCry, faClock, faHeart, 
              faCheck, faPlus, faArrowDown, faDatabase]);
 
@@ -94,9 +103,11 @@ export default {
   },
 
   methods: {
-    comedy (show) { return( show.Genres?.includes('Comedy'))},
-    drama  (show) { return( show.Genres?.includes('Drama'))},
-    hour   (show) { return( show.showRunTimeTicks > 20000000000)},
+    comedy  (show) {return( show.Genres?.includes('Comedy'))},
+    drama   (show) {return( show.Genres?.includes('Drama'))},
+    hour    (show) {return( show.showRunTimeTicks > 20000000000)},
+    played  (show) {return(!show.Played && this.database(show))},
+    database(show) {return(!show.Id.startsWith('pkup-'))},
     select() {
       (async () => {
         const srchStr = this.searchStr.toLowerCase();

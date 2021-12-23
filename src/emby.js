@@ -68,8 +68,6 @@ export async function loadAllShows() {
     let item = showsRes.data.Items[key];
     Object.assign(item, item.UserData);
     delete item.UserData;
-    if(item.Name.includes('Bob'))
-      console.log(item.RunTimeTicks);
     for(const k of ['DateCreated', 'PremiereDate'])
       if(item[k]) item[k] = item[k].replace(/T.*/, '');
     item = pick(item, fields);
@@ -97,7 +95,7 @@ export async function loadAllShows() {
         Pickup:true,
         Id:   'pkup-' + Date.now(),
       });
-      // console.log('added', series);
+      // console.log('added', shows[shows.length-1]);
     }
   }
   shows.sort((a,b) => {
