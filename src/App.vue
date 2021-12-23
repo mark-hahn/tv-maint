@@ -1,9 +1,9 @@
 <template lang="pug">
 div
-  #hdr(style="border:1px solid black;")
-    div(style="margin:5px 10px;")
+  #hdr(style="border:1px solid black; background-color:#ccc; position:fixed; left:0; top:0;")
+    div(style="margin:3px 10px;")
       input(v-model="searchStr" @input="select"
-            style="border:1px solid black; width:50px;")
+            style="border:1px solid black; width:80px;")
       button(@click="select") search
       select(v-model="filterStr" @change="select" 
              style="margin-left:10px")
@@ -15,21 +15,21 @@ div
         option Pickups/No Emby
       button(@click="showAll" style="margin-left:10px") 
         | Show All
-
-  table(style="margin:10px; width:95%")
-    tr(v-for="show in shows" key="show.Id")
-      td(@click="showInEmby(show.Id)" style="padding:3px;") 
-        div(style="display:inline-block;") {{ show.Name.substring(0,100) }}
-        div(style="color:gray; float:right") 
-          | {{ show.Genres ? '&nbsp &nbsp (' + show.Genres.join(', ') + ')' : ''}}
-      td(style="width:50px; text-align:right;") 
-             | {{show.UnplayedItemCount? show.UnplayedItemCount+' u&nbsp' : ''}}
-      td(style="width:30px; text-align:center;" @click="toggleFav(show)")
-        font-awesome-icon(icon="heart"
-            :class="{clsRed: show.IsFavorite, clsDim: !show.IsFavorite}")
-      td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
-        font-awesome-icon(icon="arrow-down"
-            :class="{clsGrn: show.Pickup, clsDim: !show.Pickup}")
+  #below-hdr(style="margin-top:30px")
+    table(style="margin:10px; width:95%; font-size:14px")
+      tr(v-for="show in shows" key="show.Id")
+        td(@click="showInEmby(show.Id)" style="padding:4px;") 
+          div(style="display:inline-block;") {{ show.Name.substring(0,100) }}
+          div(style="color:gray; float:right") 
+            | {{ show.Genres ? '&nbsp &nbsp (' + show.Genres.join(', ') + ')' : ''}}
+        td(style="width:50px; text-align:right;") 
+              | {{show.UnplayedItemCount? show.UnplayedItemCount+' u&nbsp' : ''}}
+        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
+          font-awesome-icon(icon="heart"
+              :class="{clsRed: show.IsFavorite, clsDim: !show.IsFavorite}")
+        td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
+          font-awesome-icon(icon="arrow-down"
+              :class="{clsGrn: show.Pickup, clsDim: !show.Pickup}")
 
 </template>
 
