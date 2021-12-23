@@ -10,6 +10,9 @@ div
         option(value="No Filter") No Filter
         option Favorites
         option Not Favorites
+        option Pickups
+        option Not Pickups
+        option Pickups/No Emby
       button(@click="showAll" style="margin-left:10px") 
         | Show All
   table(style="margin:10px; width:95%")
@@ -62,7 +65,11 @@ export default {
         .filter( show =>
            (srchStr == '' || show.Name.toLowerCase().includes(srchStr)) && 
            ( show.IsFavorite || fltrStr != "Favorites")                 &&
-           (!show.IsFavorite || fltrStr != "Not Favorites")     
+           (!show.IsFavorite || fltrStr != "Not Favorites")             &&
+           ( show.pickup     || fltrStr != "Pickups")                   &&
+           (!show.pickup     || fltrStr != "Not Pickups")               &&
+           ((show.pickup && show.Id[0] == 'p')
+                             || fltrStr != "Pickups/No Emby")
         );
     })()},
 
