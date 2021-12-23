@@ -21,8 +21,7 @@ div
     table(style="margin:10px; width:95%; font-size:14px")
       tr(v-for="show in shows" key="show.Id")
 
-        td(@click="showInEmby(show.Id)" style="padding:4px;") 
-          | {{ show.Name }}
+        td(@click="showInEmby(show.Id)" style="padding:4px;") {{ show.Name }}
 
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'laugh-beam']"
@@ -42,7 +41,7 @@ div
 
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['fas', 'plus']"
-            v-bind:style="(show.UnplayedItemCount>0 ? {color:'aqua'} : {color:'#ddd'  })")
+            v-bind:style="(show.UnplayedItemCount>0 ? {color:'#0cf'} : {color:'#ddd'  })")
 
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'heart']"
@@ -50,11 +49,11 @@ div
               
         td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
           font-awesome-icon(icon="arrow-down"
-            v-bind:style="(show.Pickup ? {color:'green'} : {color:'#ddd'  })")
+            v-bind:style="(show.Pickup ? {color:'#5ff'} : {color:'#ddd'  })")
 
         td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
-          font-awesome-icon(icon="database"
-            v-bind:style="(database(show) ? {color:'maroon'} : {color:'#ddd'  })")
+          font-awesome-icon(icon="tv"
+            v-bind:style="(database(show) ? {color:'#a66'} : {color:'#ddd'  })")
 
 </template>
 
@@ -77,10 +76,10 @@ import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
 import {library}         from "@fortawesome/fontawesome-svg-core";
 import {faLaughBeam, faSadCry, faClock, faHeart}  
                          from "@fortawesome/free-regular-svg-icons";
-import {faCheck, faPlus, faArrowDown, faDatabase} 
+import {faCheck, faPlus, faArrowDown, faTv} 
                          from "@fortawesome/free-solid-svg-icons";
 library.add([faLaughBeam, faSadCry, faClock, faHeart, 
-             faCheck, faPlus, faArrowDown, faDatabase]);
+             faCheck, faPlus, faArrowDown, faTv]);
 
 let allShows = [];
 
