@@ -46,13 +46,19 @@ export async function toggleFav(id, isFav) {
 export async function togglePickUp(name, pickup) {
   const config = {
     method: (pickup ? 'delete' : 'post'),
-    url:    `http://hahnca.com/tv/pickup/` + name,
+    url:    `http://hahnca.com/tv/pickup/` + encodeURI(name),
   };
   let pickUpRes;
   try { pickUpRes = await axios(config); }
   catch (e) { return pickup; }
-  console.log(name, pickup, pickUpRes);
-  return (pickUpRes.status == 200 ? pickUpRes.data : pickup);
+  console.log({name, pickup, pickUpRes});
+  if(pickUpRes.data !== 'ok') {
+    alert('Error: unable to save change to server. ' +
+          'Please tell mark.\n\nError: ' + pickUpRes.data);
+    return pickup;
+  }
+  else 
+    return !pickup;
 }
 
 export async function loadAllShows() {
@@ -69,7 +75,7 @@ export async function loadAllShows() {
   const showNames = shows.map(show => show.Name);
   // console.log(showNames);
   const configSeries = (await axios.get(
-        'http://hahnca.com/tv/config-series.json')).data;
+        'http://hahnca.com/tv/series.json')).data;
   for(let series of configSeries) {
     // console.log(series);
     let gotPickup = false;
@@ -102,7 +108,7 @@ export async function loadAllShows() {
 }
 
 function setFaveUrl (id) {
-  return `http://hahnca.com:8096 / emby
+  return encodeURI(`http://hahnca.com:8096 / emby
           / Users / 894c752d448f45a3a1260ccaabd0adff 
           / FavoriteItems / ${id}
     ?X-Emby-Client=Emby Web
@@ -110,11 +116,11 @@ function setFaveUrl (id) {
     &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
     &X-Emby-Client-Version=1.0.0
     &X-Emby-Token=${token}
-  `.replace(/\s*/g, "");
+  `.replace(/\s*/g, ""));
 }
 
 function getShowsUrl (startIdx=0, limit=10000) {
-  return `http://hahnca.com:8096 / emby
+  return encodeURI(`http://hahnca.com:8096 / emby
           / Users / 894c752d448f45a3a1260ccaabd0adff / Items
     ?SortBy=SortName
     &SortOrder=Ascending
@@ -134,7 +140,7 @@ function getShowsUrl (startIdx=0, limit=10000) {
     &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
     &X-Emby-Client-Version=1.0.0
     &X-Emby-Token=${token}
-  `.replace(/\s*/g, "");
+  `.replace(/\s*/g, ""));
 }
 /*
 AirDays: []
