@@ -59,17 +59,6 @@ div
 
 <script>
 
-/*
-  comedy             laugh-beam              teal
-  drama              sad-cry                 blue
-  RunTimeTicks       clock                   purple
-  Played             check                   lime
-  UnplayedItemCount  plus                    aqua
-  IsFavorite         heart                   red
-  PickUp             arrow-down              green
-  !pkup-             database                maroon
-*/
-
 import * as emby from "./emby.js";
 
 import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
@@ -106,7 +95,7 @@ export default {
     drama   (show) {return( show.Genres?.includes('Drama'))},
     hour    (show) {return( show.showRunTimeTicks > 20000000000)},
     played  (show) {return(!show.Played && this.database(show))},
-    database(show) {return(!show.Id.startsWith('pkup-'))},
+    database(show) {return(!show.Id.startsWith('nodb-'))},
     select() {
       (async () => {
         const srchStr = this.searchStr.toLowerCase();
@@ -118,7 +107,7 @@ export default {
         //     (!show.IsFavorite || fltrStr != "Not Favorites") &&
         //     (show.Pickup || fltrStr != "Pickups") &&
         //     (!show.Pickup || fltrStr != "Not Pickups") &&
-        //     (show.Id.startsWith("pkup-") || fltrStr != "Pickups/No Emby")
+        //     (show.Id.startsWith("nodb-") || fltrStr != "Pickups/No Emby")
         // );
       })();
     },
@@ -132,13 +121,13 @@ export default {
     },
 
     showInEmby(id) {
-      if (!id.startsWith("pkup-")) window.open(getEmbyUrl(id), id);
+      if (!id.startsWith("nodb-")) window.open(getEmbyUrl(id), id);
     },
 
     toggleFav(show) {
       (async () => {
         show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
-        if (show.Id.startsWith("pkup-")) console.log(show);
+        if (show.Id.startsWith("nodb-")) console.log(show);
       })();
     },
 
@@ -176,13 +165,16 @@ td {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-.clsGrn {
-  color: #2f2;
-}
-.clsRed {
-  color: #f66;
-}
-.clsDim {
-  color: #ddd;
-}
 </style>
+
+/*
+  comedy             laugh-beam              teal
+  drama              sad-cry                 blue
+  RunTimeTicks       clock                   purple
+  Played             check                   lime
+  UnplayedItemCount  plus                    aqua
+  IsFavorite         heart                   red
+  PickUp             arrow-down              green
+  !nodb-             database                maroon
+*/
+

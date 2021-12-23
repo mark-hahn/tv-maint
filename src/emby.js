@@ -84,16 +84,16 @@ export async function loadAllShows() {
     for(let showName of showNames) {
       if(showName == series) {
         const show = shows.find(show => show.Name == showName);
-        show.pickup = true;
+        show.Pickup = true;
         gotPickup = true;
-        // console.log('pickup', series);
+        // console.log('pickup', show);
       }
     }
     if(!gotPickup) {
       shows.push( {
         Name:  series,
         Pickup:true,
-        Id:   'pkup-' + Date.now(),
+        Id:   'nodb-' + Date.now(),
       });
       // console.log('added', shows[shows.length-1]);
     }
@@ -101,7 +101,7 @@ export async function loadAllShows() {
   shows.sort((a,b) => {
     const aname = a.Name.replace(/The\s/i, '');
     const bname = b.Name.replace(/The\s/i, '');
-    return (aname > bname ? +1 : -1);
+    return (aname.toLowerCase() > bname.toLowerCase() ? +1 : -1);
   });
   console.log('all shows loaded');
   // console.log(shows);
