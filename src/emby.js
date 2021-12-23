@@ -6,7 +6,7 @@ const markUsrId = "894c752d448f45a3a1260ccaabd0adff";
 const authHdr = 'UserId="894c752d448f45a3a1260ccaabd0adff", ' +
                 'Client="MyClient", Device="myDevice", '      +
                 'DeviceId="123456", Version="1.0.0"';
-const fields = ['Name', 'Id', 'IsFavorite', 'Played', 
+const fields = ['Name', 'Id', 'IsFavorite', 'Played', 'RunTimeTicks',
                 'UnplayedItemCount', "DateCreated", "ExternalUrls",
                 "Genres","Overview","Path","People","PremiereDate"];
 let token = '';
@@ -68,6 +68,8 @@ export async function loadAllShows() {
     let item = showsRes.data.Items[key];
     Object.assign(item, item.UserData);
     delete item.UserData;
+    if(item.Name.includes('Bob'))
+      console.log(item.RunTimeTicks);
     for(const k of ['DateCreated', 'PremiereDate'])
       if(item[k]) item[k] = item[k].replace(/T.*/, '');
     item = pick(item, fields);

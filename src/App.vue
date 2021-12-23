@@ -7,28 +7,42 @@ div
       input(v-model="searchStr" @input="select"
             style="border:1px solid black; width:80px;")
       button(@click="select") search
-      select(v-model="filterStr" @change="select" 
-             style="margin-left:10px")
-        option(value="No Filter") No Filter
-        option Favorites
-        option Not Favorites
-        option Pickups
-        option Not Pickups
-        option Pickups/No Emby
+      //- select(v-model="filterStr" @change="select" 
+      //-        style="margin-left:10px")
+      //-   option(value="No Filter") No Filter
+      //-   option Favorites
+      //-   option Not Favorites
+      //-   option Pickups
+      //-   option Not Pickups
+      //-   option Pickups/No Emby
       button(@click="showAll" style="margin-left:10px") 
         | Show All
-  #below-hdr(style="margin-top:30px")
+  div(style="margin-top:30px")
     table(style="margin:10px; width:95%; font-size:14px")
       tr(v-for="show in shows" key="show.Id")
+
         td(@click="showInEmby(show.Id)" style="padding:4px;") 
-          div(style="display:inline-block;") {{ show.Name.substring(0,100) }}
-          div(style="color:gray; float:right") 
-            | {{ show.Genres ? '&nbsp &nbsp (' + show.Genres.join(', ') + ')' : ''}}
-        td(style="width:50px; text-align:right;") 
-              | {{show.UnplayedItemCount? show.UnplayedItemCount+' u&nbsp' : ''}}
+          | {{ show.Name }}
+
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
-          font-awesome-icon(icon="heart"
+          font-awesome-icon(:icon="['far', 'laugh-beam']"
+            v-bind:style="(comedy(show) ? {color:'teal'} : {color:'#ddd'  })")
+
+        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
+          font-awesome-icon(:icon="['far', 'sad-cry']"
+            v-bind:style="(drama(show) ? {color:'blue'} : {color:'#ddd'  })")
+
+        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
+          font-awesome-icon(:icon="['far', 'clock']"
+            v-bind:style="(hour(show) ? {color:'purple'} : {color:'#ddd'  })")
+
+        td(style="width:50px; text-align:right;") 
+              | {{show.UnplayedItemCount ? show.UnplayedItemCount+' u&nbsp' : ''}}
+
+        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
+          font-awesome-icon(:icon="['far', 'heart']"
               :class="{clsRed: show.IsFavorite, clsDim: !show.IsFavorite}")
+              
         td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
           font-awesome-icon(icon="arrow-down"
               :class="{clsGrn: show.Pickup, clsDim: !show.Pickup}")
@@ -36,21 +50,28 @@ div
 </template>
 
 <script>
+
 /*
-  PlayCount: 0
-  PlaybackPositionTicks: 0
-  Played: false
-  PlayedPercentage: 5
-  UnplayedItemCount: 19
+  comedy             laugh-beam              teal
+  drama              sad-tear                blue
+  RunTimeTicks       clock                   purple
+  Played             check                   lime
+  UnplayedItemCount  plus                    aqua
+  IsFavorite         heart                   red
+  PickUp             arrow-down              green
+  !pkup-             database                maroon
 */
 
 import * as emby from "./emby.js";
 
-import { FontAwesomeIcon }      from "@fortawesome/vue-fontawesome";
-import { library }              from "@fortawesome/fontawesome-svg-core";
-import { faHeart, faArrowDown } from "@fortawesome/free-solid-svg-icons";
-library.add(faHeart);
-library.add(faArrowDown);
+import {FontAwesomeIcon}       from "@fortawesome/vue-fontawesome";
+import {library}               from "@fortawesome/fontawesome-svg-core";
+import {faLaughBeam, faSadCry, faClock, faHeart}  
+                               from "@fortawesome/free-regular-svg-icons";
+import {faCheck, faPlus, faArrowDown, faDatabase} 
+                               from "@fortawesome/free-solid-svg-icons";
+library.add([faLaughBeam, faSadCry, faClock, faHeart, 
+             faCheck, faPlus, faArrowDown, faDatabase]);
 
 let allShows = [];
 
@@ -65,7 +86,6 @@ export default {
     return {
       shows: [],
       searchStr: "",
-      filterStr: "No Filter",
     };
   },
 
@@ -74,26 +94,29 @@ export default {
   },
 
   methods: {
+    comedy (show) { return( show.Genres?.includes('Comedy'))},
+    drama  (show) { return( show.Genres?.includes('Drama'))},
+    hour   (show) { return( show.showRunTimeTicks > 20000000000)},
     select() {
       (async () => {
         const srchStr = this.searchStr.toLowerCase();
-        const fltrStr = this.filterStr;
-        this.shows = allShows.filter(
-          (show) =>
-            (srchStr == "" || show.Name.toLowerCase().includes(srchStr)) &&
-            (show.IsFavorite || fltrStr != "Favorites") &&
-            (!show.IsFavorite || fltrStr != "Not Favorites") &&
-            (show.Pickup || fltrStr != "Pickups") &&
-            (!show.Pickup || fltrStr != "Not Pickups") &&
-            (show.Id.startsWith("pkup-") || fltrStr != "Pickups/No Emby")
-        );
+        // const fltrStr = this.filterStr;
+        // this.shows = allShows.filter(
+        //   (show) =>
+        //     (srchStr == "" || show.Name.toLowerCase().includes(srchStr)) &&
+        //     (show.IsFavorite || fltrStr != "Favorites") &&
+        //     (!show.IsFavorite || fltrStr != "Not Favorites") &&
+        //     (show.Pickup || fltrStr != "Pickups") &&
+        //     (!show.Pickup || fltrStr != "Not Pickups") &&
+        //     (show.Id.startsWith("pkup-") || fltrStr != "Pickups/No Emby")
+        // );
       })();
     },
 
     showAll() {
       (async () => {
         this.searchStr = "";
-        this.filterStr = "No Filter";
+        // this.filterStr = "No Filter";
         this.shows = allShows;
       })();
     },
