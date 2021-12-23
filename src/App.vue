@@ -18,10 +18,11 @@ div
 
   table(style="margin:10px; width:95%")
     tr(v-for="show in shows" key="show.Id")
-      td(@click="showInEmby(show.Id)") 
-        span(style="") {{ show.Name.substring(0,100) }}
-        span(style="color:gray;") {{'&nbsp &nbsp (' + show.Genres?.join(', ') + ')' }}
-      td(style="width:50px; text-align:right") 
+      td(@click="showInEmby(show.Id)" style="padding:3px;") 
+        div(style="display:inline-block;") {{ show.Name.substring(0,100) }}
+        div(style="color:gray; float:right") 
+          | {{ show.Genres ? '&nbsp &nbsp (' + show.Genres.join(', ') + ')' : ''}}
+      td(style="width:50px; text-align:right;") 
              | {{show.UnplayedItemCount? show.UnplayedItemCount+' u&nbsp' : ''}}
       td(style="width:30px; text-align:center;" @click="toggleFav(show)")
         font-awesome-icon(icon="heart"
