@@ -15,19 +15,32 @@ div
         option Pickups/No Emby
       button(@click="showAll" style="margin-left:10px") 
         | Show All
+
   table(style="margin:10px; width:95%")
     tr(v-for="show in shows" key="show.Id")
-      td(@click="showInEmby(show.Id)") {{show.Name.substring(0,20)}}
-      td(style="width:16px;" @click="toggleFav(show)")
+      td(@click="showInEmby(show.Id)") 
+        span(style="") {{ show.Name.substring(0,100) }}
+        span(style="color:gray;") {{'&nbsp &nbsp (' + show.Genres?.join(', ') + ')' }}
+      td(style="width:50px; text-align:right") 
+             | {{show.UnplayedItemCount? show.UnplayedItemCount+' u&nbsp' : ''}}
+      td(style="width:30px; text-align:center;" @click="toggleFav(show)")
         font-awesome-icon(icon="heart"
             :class="{clsRed: show.IsFavorite, clsDim: !show.IsFavorite}")
-      td(style="width:16px;" @click="togglePickUp(show)")
+      td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
         font-awesome-icon(icon="arrow-down"
             :class="{clsGrn: show.Pickup, clsDim: !show.Pickup}")
 
 </template>
 
 <script>
+/*
+  PlayCount: 0
+  PlaybackPositionTicks: 0
+  Played: false
+  PlayedPercentage: 5
+  UnplayedItemCount: 19
+*/
+
 import * as emby from "./emby.js";
 
 import { FontAwesomeIcon }      from "@fortawesome/vue-fontawesome";
@@ -106,6 +119,7 @@ export default {
       await emby.init();
       allShows = await emby.loadAllShows(0, 5);
       this.shows = allShows;
+      // console.log(allShows[0]);
     })();
   },
 };
@@ -125,10 +139,6 @@ td {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-span {
-  font-size: 48px;
-  color: Dodgerblue;
 }
 .clsGrn {
   color: #2f2;

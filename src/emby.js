@@ -65,13 +65,15 @@ export async function loadAllShows() {
   const showsRes = await axios.get(getShowsUrl());
   const shows = [];
   for(let key in showsRes.data.Items) {
-    const item = showsRes.data.Items[key];
+    let item = showsRes.data.Items[key];
     Object.assign(item, item.UserData);
     delete item.UserData;
     for(const k of ['DateCreated', 'PremiereDate'])
       if(item[k]) item[k] = item[k].replace(/T.*/, '');
-    shows.push(pick(item, fields));
+    item = pick(item, fields);
+    shows.push(item);
   }
+  // console.log(shows);
   const showNames = shows.map(show => show.Name);
   // console.log(showNames);
   const configSeries = (await axios.get(
@@ -120,7 +122,7 @@ function setFaveUrl (id) {
 }
 
 function getShowsUrl (startIdx=0, limit=10000) {
-  return encodeURI(`http://hahnca.com:8096 / emby
+  return `http://hahnca.com:8096 / emby
           / Users / 894c752d448f45a3a1260ccaabd0adff / Items
     ?SortBy=SortName
     &SortOrder=Ascending
@@ -140,7 +142,7 @@ function getShowsUrl (startIdx=0, limit=10000) {
     &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
     &X-Emby-Client-Version=1.0.0
     &X-Emby-Token=${token}
-  `.replace(/\s*/g, ""));
+  `.replace(/\s*/g, "");
 }
 /*
 AirDays: []
