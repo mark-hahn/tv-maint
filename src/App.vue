@@ -17,44 +17,35 @@ div
       //-   option Pickups/No Emby
       button(@click="showAll" style="margin-left:10px") 
         | Show All
-  div(style="margin-top:30px")
+
+  div(style="margin-top:40px")
     table(style="margin:10px; width:95%; font-size:14px")
       tr(v-for="show in shows" key="show.Id")
-
         td(@click="showInEmby(show.Id)" style="padding:4px;") {{ show.Name }}
-
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'laugh-beam']"
             v-bind:style="(comedy(show) ? {color:'teal'} : {color:'#ddd'  })")
-
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'sad-cry']"
             v-bind:style="(drama(show) ? {color:'blue'} : {color:'#ddd'  })")
-
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'clock']"
             v-bind:style="(hour(show) ? {color:'purple'} : {color:'#ddd'  })")
-
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['fas', 'check']"
             v-bind:style="(played(show) ? {color:'lime'} : {color:'#ddd'  })")
-
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['fas', 'plus']"
             v-bind:style="(show.UnplayedItemCount>0 ? {color:'#0cf'} : {color:'#ddd'  })")
-
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'heart']"
             v-bind:style="(show.IsFavorite>0 ? {color:'red'} : {color:'#ddd'  })")
-              
         td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
           font-awesome-icon(icon="arrow-down"
             v-bind:style="(show.Pickup ? {color:'#5ff'} : {color:'#ddd'  })")
-
         td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
           font-awesome-icon(icon="tv"
             v-bind:style="(database(show) ? {color:'#a66'} : {color:'#ddd'  })")
-
 </template>
 
 <script>
