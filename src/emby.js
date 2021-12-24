@@ -12,7 +12,7 @@ let token = '';
 const getToken = async (name, pwd) => {
   const config = {
     method: 'post',
-    url: "https://hahnca.com:8920" +
+    url: "http://hahnca.com:8096" +
          "/emby/Users/AuthenticateByName" +
          "?api_key=ba7d62f79cbd4a539b675b05b5663607",
     headers: { Authorization: authHdr },
@@ -29,7 +29,7 @@ export async function init() {
 export async function toggleFav(id, isFav) {
   const config = {
     method: (isFav ? 'delete' : 'post'),
-    url:     setFaveUrl(id),
+    url:     getFaveUrl(id),
   };
   let favRes;
   try { favRes = await axios(config); }
@@ -60,6 +60,8 @@ export async function loadAllShows() {
   const shows = [];
   for(let key in showsRes.data.Items) {
     let item = showsRes.data.Items[key];
+    if(item.Name == 'How About Coffee')
+     console.log(item);
     Object.assign(item, item.UserData);
     delete item.UserData;
     for(const k of ['DateCreated', 'PremiereDate'])
@@ -97,11 +99,24 @@ export async function loadAllShows() {
   });
   console.log('all shows loaded');
   // console.log(shows);
-  // console.log(shows.filter(show => show.pickup));
   return shows;
 }
 
-function setFaveUrl (id) {
+export async function deleteShow(id) {
+  const delRes = await axios.delete(getDeleteShowUrl(id));
+  console.log({delRes});
+  const res = delRes.status;
+  console.log('deleteShow', res);
+  let err = 'ok';
+  if(res != 204) {
+    err = 'Error: unable to delete show. ' +
+          'Please tell mark.\n\nError: ' + delRes.data;
+    alert(err);
+  }
+  return err;
+}
+
+function getFaveUrl (id) {
   return encodeURI(`http://hahnca.com:8096 / emby
           / Users / 894c752d448f45a3a1260ccaabd0adff 
           / FavoriteItems / ${id}
@@ -112,35 +127,6 @@ function setFaveUrl (id) {
     &X-Emby-Token=${token}
   `.replace(/\s*/g, ""));
 }
-/*
-15000000000  21 mins
-27000000512  43 mins
-30000000000  41 mins
-
-*/
-// function getShowsUrl (startIdx=0, limit=10000) {
-//   return `http://hahnca.com:8096 / emby
-//           / Users / 894c752d448f45a3a1260ccaabd0adff / Items
-//     ?SortBy=SortName
-//     &SortOrder=Ascending
-//     &IncludeItemTypes=Series
-//     &Recursive=true
-//     &Fields=Name %2c Id %2c IsFavorite %2c 
-//             Played %2c UnplayedItemCount %2c 
-//             DateCreated %2c ExternalUrls %2c 
-//             Genres %2c Overview %2c Path %2c 
-//             People %2c PremiereDate
-//     &StartIndex=${startIdx}
-//     &ParentId=4514ec850e5ad0c47b58444e17b6346c
-//     &GroupItemsIntoCollections=false
-//     &Limit=${limit}
-//     &X-Emby-Client=Emby%20Web
-//     &X-Emby-Device-Name=Chrome
-//     &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
-//     &X-Emby-Client-Version=1.0.0
-//     &X-Emby-Token=${token}
-//   `.replace(/\s*/g, "");
-// }
 
 function getShowsUrl (startIdx=0, limit=10000) {
   return `http://hahnca.com:8096 / emby
@@ -162,7 +148,18 @@ function getShowsUrl (startIdx=0, limit=10000) {
   `.replace(/\s*/g, "");
 }
 
+function getDeleteShowUrl(id) {
+  return `http://hahnca.com:8096 / emby / Items / ${id}
+    ?X-Emby-Client=EmbyWeb
+    &X-Emby-Device-Name=Chrome
+    &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
+    &X-Emby-Client-Version=4.6.4.0
+    &X-Emby-Token=${token}
+  `.replace(/\s*/g, "");
+}
+
 /*
+
 AirDays: []
 BackdropImageTags: ["dd2d6479fc843d9a6e834d3f3f965ffe"]
 CanDelete: true

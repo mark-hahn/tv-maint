@@ -43,7 +43,7 @@ div
         td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
           font-awesome-icon(icon="arrow-down"
             :style="(pickup(show) ? {color:'#5ff'} : {color:'#ddd'  })")
-        td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
+        td(style="width:30px; text-align:center;" @click="deleteShow(show)")
           font-awesome-icon(icon="tv"
             :style="(database(show) ? {color:'#a66'} : {color:'#ddd'  })")
 </template>
@@ -140,12 +140,21 @@ export default {
         show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
       })();
     },
+
+    deleteShow(show) {
+      (async () => {
+        const id = show.Id;
+        const res = await emby.deleteShow(id);
+        if(res == 'ok')
+          this.shows = allShows.filter((show) => show.Id != id);
+      })();
+    },
   },
 
   mounted() {
     (async () => {
       await emby.init();
-      allShows = await emby.loadAllShows(0, 5);
+      allShows = await emby.loadAllShows();
       this.shows = allShows;
       // console.log(allShows[0]);
     })();
