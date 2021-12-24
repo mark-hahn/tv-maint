@@ -45,14 +45,14 @@ export async function togglePickUp(name, pickup) {
   let pickUpRes;
   try { pickUpRes = await axios(config); }
   catch (e) { return pickup; }
-  console.log({name, pickup, pickUpRes});
   if(pickUpRes.data !== 'ok') {
     alert('Error: unable to save change to server. ' +
           'Please tell mark.\n\nError: ' + pickUpRes.data);
     return pickup;
   }
-  else 
+  else {
     return !pickup;
+  }
 }
 
 export async function loadAllShows() {
@@ -61,9 +61,6 @@ export async function loadAllShows() {
   for(let key in showsRes.data.Items) {
     let item = showsRes.data.Items[key];
     Object.assign(item, item.UserData);
-
-    console.log(item.Name, item.RunTimeTicks);
-
     delete item.UserData;
     for(const k of ['DateCreated', 'PremiereDate'])
       if(item[k]) item[k] = item[k].replace(/T.*/, '');

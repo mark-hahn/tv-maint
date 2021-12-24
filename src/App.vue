@@ -137,8 +137,7 @@ export default {
 
     togglePickUp(show) {
       (async () => {
-        show.pickup = await emby.togglePickUp(show.Name, show.pickup);
-        // console.log('show.pickup', show.pickup);
+        show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
       })();
     },
   },
