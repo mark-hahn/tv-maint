@@ -1,7 +1,5 @@
 import axios from "axios"
 
-const u = "https://hahnca.com:8920/emby";
-const q = "?api_key=ba7d62f79cbd4a539b675b05b5663607";
 const markUsrId = "894c752d448f45a3a1260ccaabd0adff";
 const authHdr = 'UserId="894c752d448f45a3a1260ccaabd0adff", ' +
                 'Client="MyClient", Device="myDevice", '      +
@@ -11,16 +9,12 @@ const fields = ['Name', 'Id', 'IsFavorite', 'Played', 'RunTimeTicks',
                 "Genres","Overview","Path","People","PremiereDate"];
 let token = '';
 
-const pick = (obj, props) => 
-  Object.entries(obj).reduce( (r, [k, v]) => {
-    if(props.includes(k)) r[k] = v;
-    return r;
-  },{});
-
 const getToken = async (name, pwd) => {
   const config = {
     method: 'post',
-    url: u+"/Users/AuthenticateByName"+q,
+    url: "https://hahnca.com:8920" +
+         "/emby/Users/AuthenticateByName" +
+         "?api_key=ba7d62f79cbd4a539b675b05b5663607",
     headers: { Authorization: authHdr },
     data: { Username: name, Pw: pwd },
   };
@@ -67,10 +61,12 @@ export async function loadAllShows() {
   for(let key in showsRes.data.Items) {
     let item = showsRes.data.Items[key];
     Object.assign(item, item.UserData);
+
+    console.log(item.Name, item.RunTimeTicks);
+
     delete item.UserData;
     for(const k of ['DateCreated', 'PremiereDate'])
       if(item[k]) item[k] = item[k].replace(/T.*/, '');
-    item = pick(item, fields);
     shows.push(item);
   }
   // console.log(shows);
@@ -86,7 +82,6 @@ export async function loadAllShows() {
         const show = shows.find(show => show.Name == showName);
         show.Pickup = true;
         gotPickup = true;
-        // console.log('pickup', show);
       }
     }
     if(!gotPickup) {
@@ -120,30 +115,56 @@ function setFaveUrl (id) {
     &X-Emby-Token=${token}
   `.replace(/\s*/g, ""));
 }
+/*
+15000000000  21 mins
+27000000512  43 mins
+30000000000  41 mins
+
+*/
+// function getShowsUrl (startIdx=0, limit=10000) {
+//   return `http://hahnca.com:8096 / emby
+//           / Users / 894c752d448f45a3a1260ccaabd0adff / Items
+//     ?SortBy=SortName
+//     &SortOrder=Ascending
+//     &IncludeItemTypes=Series
+//     &Recursive=true
+//     &Fields=Name %2c Id %2c IsFavorite %2c 
+//             Played %2c UnplayedItemCount %2c 
+//             DateCreated %2c ExternalUrls %2c 
+//             Genres %2c Overview %2c Path %2c 
+//             People %2c PremiereDate
+//     &StartIndex=${startIdx}
+//     &ParentId=4514ec850e5ad0c47b58444e17b6346c
+//     &GroupItemsIntoCollections=false
+//     &Limit=${limit}
+//     &X-Emby-Client=Emby%20Web
+//     &X-Emby-Device-Name=Chrome
+//     &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
+//     &X-Emby-Client-Version=1.0.0
+//     &X-Emby-Token=${token}
+//   `.replace(/\s*/g, "");
+// }
 
 function getShowsUrl (startIdx=0, limit=10000) {
   return `http://hahnca.com:8096 / emby
-          / Users / 894c752d448f45a3a1260ccaabd0adff / Items
+      / Users / 894c752d448f45a3a1260ccaabd0adff / Items
     ?SortBy=SortName
     &SortOrder=Ascending
     &IncludeItemTypes=Series
     &Recursive=true
-    &Fields=Name %2c Id %2c IsFavorite %2c 
-            Played %2c UnplayedItemCount %2c 
-            DateCreated %2c ExternalUrls %2c 
-            Genres %2c Overview %2c Path %2c 
-            People %2c PremiereDate
+    &Fields= Name              %2c Id                %2c
+             IsFavorite        %2c Played            %2c 
+             UnplayedItemCount %2c DateCreated       %2c 
+             ExternalUrls      %2c Genres            %2c 
+             Overview          %2c Path              %2c 
+             People            %2c PremiereDate
     &StartIndex=${startIdx}
     &ParentId=4514ec850e5ad0c47b58444e17b6346c
-    &GroupItemsIntoCollections=false
     &Limit=${limit}
-    &X-Emby-Client=Emby%20Web
-    &X-Emby-Device-Name=Chrome
-    &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
-    &X-Emby-Client-Version=1.0.0
     &X-Emby-Token=${token}
   `.replace(/\s*/g, "");
 }
+
 /*
 AirDays: []
 BackdropImageTags: ["dd2d6479fc843d9a6e834d3f3f965ffe"]

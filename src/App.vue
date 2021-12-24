@@ -93,7 +93,8 @@ export default {
   methods: {
     comedy  (show) {return( show.Genres?.includes('Comedy'))},
     drama   (show) {return( show.Genres?.includes('Drama'))},
-    hour    (show) {return( show.showRunTimeTicks > 20000000000)},
+    hour    (show) {return(  // > 35 mins is an hour
+             show.RunTimeTicks > (15000000000/21) * 35)},
     played  (show) {return(!show.Played && this.database(show))},
     database(show) {return(!show.Id.startsWith('nodb-'))},
     select() {
