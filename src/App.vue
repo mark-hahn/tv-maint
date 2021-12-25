@@ -1,24 +1,26 @@
 <template lang="pug">
 div
-  #hdr
-    div(style="margin:3px 10px; display:inline-block;")
+  #hdr(style="width:100%; background-color:#ccc; ")
+    div(style="margin:3px 10px; display:inline-block;width:100%")
       #lbl TV Series
       input(v-model="searchStr" @input="select"
             style="border:1px solid black; width:80px;")
       button(@click="select") search
       button(@click="showAll" style="margin-left:20px") 
         | Show All
-    div(style="float:right; margin-right:23px;")
-      table(style="background-color:white;")
+    div(style="width:100%;")
+      table(style="background-color:white; padding:0 14px; width:100%;")
         tr
+          td(style="padding:4px;text-align:right; ") 
+            | Filters:
           td( v-for="cond in conds"
               style="width:30px;text-align:center;"
               @click="condFltrClick(cond)" )
             font-awesome-icon(:icon="cond.icon"
               :style="{color:cond.color}")
-  div(style="margin-top:55px")
-    table(style="margin:10px; width:95%; font-size:14px")
-      tr(v-for="show in shows" key="show.Id")
+  div(style="margin-top:55px; width:100%;")
+    table(style="padding:0 5px; width:100%; font-size:14px")
+      tr.show-row(v-for="show in shows" key="show.Id")
         td(@click="showInEmby(show.Id)" 
             style="padding:4px;") {{ show.Name }}
         td( v-for="cond in conds" 
@@ -206,13 +208,13 @@ export default {
 </script>
 
 <style>
-tr {
+.show-row {
   outline: thin solid;
 }
 tr:nth-child(even) {
   background-color: #f4f4f4;
 }
-td {
+.show-td {
   outline: thin solid;
 }
 #app {
@@ -220,7 +222,7 @@ td {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-#hdr { border:1px solid black; background-color:#ccc; 
+#hdr { border:1px solid black;
        position:fixed; left:0; top:0;
 }
 
