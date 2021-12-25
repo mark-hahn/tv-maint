@@ -11,13 +11,12 @@ div
     div(style="width:100%;")
       table(style="background-color:white; padding:0 14px; width:100%;")
         tr
-          td(style="padding:4px;text-align:right; ") 
-            | Filters:
+          td(style="padding:0 4px;text-align:right;") Filters:
           td( v-for="cond in conds"
-              style="width:30px;text-align:center;"
+              :style="{width:'30px',textAlign:'center'}"
               @click="condFltrClick(cond)" )
             font-awesome-icon(:icon="cond.icon"
-              :style="{color:cond.color}")
+              :style="{color:condFltrColor(cond)}")
   div(style="margin-top:55px; width:100%;")
     table(style="padding:0 5px; width:100%; font-size:14px")
       tr.show-row(v-for="show in shows" key="show.Id")
@@ -27,7 +26,7 @@ div
             style="width:30px; text-align:center;"
            @click="cond.click(show)" )
           font-awesome-icon(:icon="cond.icon"
-              :style="{color:cond.color}")
+              :style="{color:condColor(show,cond)}")
 </template>
 
 <script>
@@ -73,25 +72,20 @@ export default {
           cond(show){ return show.RunTimeTicks > (15e9/21)*35 },  
           click(show) { },
         },
-        Played: {
-          color:'lime', filter:0, icon:['fas','check'], 
-          cond(show){ return !show.Played },  
-          click(show) {
-          },
-        },
+        // Played: {
+        //   color:'lime', filter:0, icon:['fas','check'], 
+        //   cond(show){ return !show.Played },  
+        //   click(show) { },
+        // },
         Unplayed: {
           color:'#0cf', filter:0, icon:['fas','plus'], 
           cond(show){ return show.UnplayedItemCount > 0 },  
-          click(show) {
-          },
+          click(show) { },
         },
         Favorite: {
           color:'red', filter:0, icon:['far','heart'], 
           cond(show){ return show.IsFavorite },   
-          click(show) { (async () => {
-            show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
-            if (show.Id.startsWith("nodb-")) console.log(show);
-          })()},
+          click(show) { this.toggleFavorite(show) },
         },
         Pickup: {
           color:'#5ff', filter:0, icon:['fas','arrow-down'], 
@@ -113,15 +107,10 @@ export default {
 
   /////////////  METHODS  ////////////
   methods: {
-    condColor(show, cond) {
-      if(cond.cond(show)) return cond.color;
-      return '#ddd';
-    },
-
-    confFltrClick(cond) {
+    condFltrClick(cond) {
       cond.filter++;
       if(cond.filter == 2) cond.filter = -1;
-      console.log('confFltrClick', cond);
+      console.log('condFltrClick', cond);
       this.select();
     },
 
@@ -133,13 +122,19 @@ export default {
       }
     },
 
+    condColor(show, cond) {
+      if(cond.cond(show)) return cond.color;
+      return '#ddd';
+    },
+
     select() {
       const srchStrLc = ((this.searchStr == "") ? null :
                           this.searchStr.toLowerCase());
       this.shows = allShows.filter((show) => {
-        if(srchStrLc && !show.Name.toLowerCase()
-                             .includes(srchStrLc)) return false;
-        for(let cond of this.conds) {
+        if(srchStrLc && 
+          !show.Name.toLowerCase().includes(srchStrLc)) return false;
+        for(let key in this.conds) {
+          const cond = this.conds[key];
           if(cond.filter == 0) continue;
           if((cond.filter == +1) != cond.cond(show)) return false;
         }
@@ -156,6 +151,13 @@ export default {
 
     showInEmby(id) {
       if (!id.startsWith("nodb-")) window.open(getEmbyUrl(id), id);
+    },
+
+    toggleFavorite(show) {
+     (async () => {
+            show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
+            if (show.Id.startsWith("nodb-")) console.log(show);
+      })();
     },
 
     togglePickup(show) {
