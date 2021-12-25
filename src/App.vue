@@ -20,8 +20,12 @@ div
   div(style="margin-top:55px; width:100%;")
     table(style="padding:0 5px; width:100%; font-size:14px")
       tr.show-row(v-for="show in shows" key="show.Id")
-        td(@click="showInEmby(show.Id)" 
-            style="padding:4px;") {{ show.Name }}
+        td(@click="showNameClick(show)" 
+            style="padding:4px;")
+          span(v-if="!show.editingPickupName") {{show.Name }}
+          input(v-else style="border:1px solid black"
+                v-model="pkupEditName"
+                @input="savePkupName(show)")
         td( v-for="cond in conds" 
             style="width:30px; text-align:center;"
            @click="cond.click(show)" )
@@ -49,6 +53,7 @@ export default {
   data() { return {
     shows: [],
     searchStr: "",
+    pkupEditName: "",
     conds: {
       Comedy: {
         color:'teal', filter:0, icon:['far','laugh-beam'],  
@@ -111,6 +116,18 @@ export default {
       }
     },
 
+    savePkupName(show) {
+      const oldName = show.Name;
+      const newName = this.pkupEditName;
+      const res = 
+        emby.replacePickupName(oldName, newName);
+      if(res == 'ok') {
+        console.log(res);
+        show.Name = this.pkupEditName;
+      }
+      show.editingPickupName = false;
+    },
+
     condColor(show, cond) {
       if(cond.cond(show)) return cond.color;
       return '#ddd';
@@ -138,9 +155,13 @@ export default {
       this.shows = allShows;
     },
 
-    showInEmby(id) {
-      if(!id.startsWith("nodb-")) 
-        window.open(emby.getEmbyPageUrl(id), id);
+    showNameClick(show) {
+      for(let show of this.shows) 
+        show.editingPickupName = false;
+      if(show.Id.startsWith("nodb-")) 
+        show.editingPickupName = true;
+      else 
+        window.open(emby.getEmbyPageUrl(show.Id), show.Id);
     },
 
     toggleFavorite(show) {
@@ -193,6 +214,8 @@ export default {
     (async () => {
       await emby.init();
       allShows = await emby.loadAllShows();
+      for(let show of this.shows) 
+        show.editingPickupName = false;
       this.shows = allShows;
       // console.log(allShows[0]);
     })();

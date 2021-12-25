@@ -100,6 +100,33 @@ export async function togglePickUp(name, pickup) {
   }
 }
 
+export async function replacePickupName(oldName, newName) {
+  const config = {
+    method: 'delete',
+    url:`http://hahnca.com/tv/pickup/` + encodeURI(oldName),
+  };
+  let pickUpRes;
+  let err = 'ok';
+  try { pickUpRes = await axios(config); }
+  catch (e) { err = e.message }
+  if(err !== 'ok' ||  pickUpRes.data !== 'ok') 
+    err = 'Error in replacePickupName delete: ' +
+            pickUpRes.data + ', ' + err;
+  if(err == 'ok') {
+    const config = {
+      method: 'post',
+      url:`http://hahnca.com/tv/pickup/` + encodeURI(newName),
+    };
+    try { pickUpRes = await axios(config); }
+    catch (e) { err = e.message }
+    if(err !== 'ok' ||  pickUpRes.data !== 'ok') 
+      err = 'Error in replacePickupName post: ' +
+             pickUpRes.data + ', ' + err;
+  }
+  if(err !== 'ok') console.log(err);
+  return err;
+}
+
 export async function deleteShow(id) {
   const delRes = await axios.delete(getDeleteShowUrl(id));
   console.log({delRes});
