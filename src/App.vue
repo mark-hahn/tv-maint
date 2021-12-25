@@ -13,9 +13,11 @@ div
       table(style="background-color:white;")
         tr
           td(style="width:30px; text-align:center;"
-             @click="filter('Comedy')")
+               @click="filter('Comedy')")
             font-awesome-icon(:icon="['far', 'laugh-beam']")
-          td(style="width:30px")
+          td(style="width:30px; text-align:center;"
+               @click="filter('Drama')")
+            font-awesome-icon(:icon="['far', 'sad-cry']")
           td(style="width:30px")
           td
           td(style="width:30px")
@@ -140,16 +142,17 @@ export default {
 
     /////////////  FILTER  ////////////
     select() {
+      const srchStrLc = ((this.searchStr == "") ? null :
+                          this.searchStr.toLowerCase());
       this.shows = allShows.filter((show) => {
-        if(this.searchStr != "" &&
-            !show.Name.toLowerCase().includes(
-                  this.searchStr.toLowerCase())) return false;
+        if(srchStrLc && !show.Name.toLowerCase()
+                             .includes(srchStrLc)) return false;
         for(let cond of conds) {
           if(this.fltrCond[cond] == 0) continue;
           let state = false;
           switch(cond) {
-            case 'Comedy': state = show.Genres.includes('Comedy'); break;
-            case 'Drama':  state = show.Genres.includes('Drama');  break;
+            case 'Comedy': state = show.Genres?.includes('Comedy'); break;
+            case 'Drama':  state = show.Genres?.includes('Drama');  break;
           }
           if((this.fltrCond[cond] == +1) != state) return false;
         }
@@ -166,11 +169,9 @@ export default {
 
     /////////////////  UPDATE METHODS  /////////////////
     showAll() {
-      (async () => {
-        this.searchStr = "";
-        for(let cond of conds) this.fltrCond[cond] == 0;
-        this.shows = allShows;
-      })();
+      this.searchStr = "";
+      for(let cond of conds) this.fltrCond[cond] == 0;
+      this.shows = allShows;
     },
 
     showInEmby(id) {
