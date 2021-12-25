@@ -1,24 +1,30 @@
 <template lang="pug">
 div
   #hdr(style="border:1px solid black; background-color:#ccc; position:fixed; left:0; top:0;")
-    div(style="margin:3px 10px;")
-      div(style="display:inline-block;margin-right:10px; font-size:14px; font-weight:bold; color:blue") 
+    div(style="margin:3px 10px; display:inline-block;")
+      div(style="display:inline-block;margin-right:10px; font-size:14px; margin-right:20px; font-weight:bold; color:blue") 
        | TV Series
       input(v-model="searchStr" @input="select"
             style="border:1px solid black; width:80px;")
       button(@click="select") search
-      //- select(v-model="filterStr" @change="select" 
-      //-        style="margin-left:10px")
-      //-   option(value="No Filter") No Filter
-      //-   option Favorites
-      //-   option Not Favorites
-      //-   option Pickups
-      //-   option Not Pickups
-      //-   option Pickups/No Emby
-      button(@click="showAll" style="margin-left:10px") 
+      button(@click="showAll" style="margin-left:20px") 
         | Show All
+    div(style="float:right; margin-right:23px;")
+      table(style="background-color:white;")
+        tr
+          td(style="width:30px; text-align:center;")
+            font-awesome-icon(:icon="['far', 'laugh-beam']")
+          td(style="width:30px")
+          td(style="width:30px")
+          td
+          td(style="width:30px")
+          td(style="width:30px")
+          td
+          td(style="width:30px")
+          td(style="width:30px")
+          td(style="width:30px")
 
-  div(style="margin-top:40px")
+  div(style="margin-top:55px")
     table(style="margin:10px; width:95%; font-size:14px")
       tr(v-for="show in shows" key="show.Id")
         td(@click="showInEmby(show.Id)" style="padding:4px;") {{ show.Name }}
