@@ -158,6 +158,12 @@ function getDeleteShowUrl(id) {
   `.replace(/\s*/g, "");
 }
 
+export function getEmbyPageUrl(id) {
+  return `http://hahnca.com:8096 / web / index.html #! / item
+    ?id=${id}&serverId=ae3349983dbe45d9aa1d317a7753483e
+    `.replace(/\s*/g, "");
+}
+
 /*
 
 AirDays: []

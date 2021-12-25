@@ -30,8 +30,6 @@ div
 </template>
 
 <script>
-// [cond.icon[0],cond.icon[1]]
-
 import * as emby from "./emby.js";
 
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -45,65 +43,56 @@ library.add([ faLaughBeam, faSadCry, faClock, faHeart,
 
 let allShows = [];
 
-const getEmbyUrl = (id) =>
-  `http://hahnca.com:8096/web/index.html
-   #!/item?id=${id}&serverId=ae3349983dbe45d9aa1d317a7753483e`.replace(/\s*/g, "");
-
 export default {
   name: "App",
-
-  data() {
-    return {
-      shows:     [],
-      searchStr: "",
-      conds: {
-        Comedy: {
-          color:'teal', filter:0, icon:['far','laugh-beam'],  
-          cond(show){ return show.Genres?.includes("Comedy") },   
-          click(show) { },
-        },
-        Drama: {
-          color:'blue', filter:0, icon:['far','sad-cry'], 
-          cond(show){ return show.Genres?.includes("Drama") },   
-          click(show) { },
-        },
-        Hour: {
-          color:'purple', filter:0, icon:['far','clock'], 
-          cond(show){ return show.RunTimeTicks > (15e9/21)*35 },  
-          click(show) { },
-        },
-        // Played: {
-        //   color:'lime', filter:0, icon:['fas','check'], 
-        //   cond(show){ return !show.Played },  
-        //   click(show) { },
-        // },
-        Unplayed: {
-          color:'#0cf', filter:0, icon:['fas','plus'], 
-          cond(show){ return show.UnplayedItemCount > 0 },  
-          click(show) { },
-        },
-        Favorite: {
-          color:'red', filter:0, icon:['far','heart'], 
-          cond(show){ return show.IsFavorite },   
-          click(show) { this.toggleFavorite(show) },
-        },
-        Pickup: {
-          color:'#5ff', filter:0, icon:['fas','arrow-down'], 
-          cond(show){ return show.Pickup },   
-          click(show) { this.togglePickup(show) },
-        },
-        Database: {
-          color:'#a66', filter:0, icon:['fas','tv'], 
-          cond(show){ return !show.Id.startsWith("nodb-") },  
-          click(show) { this.deleteShow(show) },
-        }
+  components: { FontAwesomeIcon, },
+  data() { return {
+    shows: [],
+    searchStr: "",
+    conds: {
+      Comedy: {
+        color:'teal', filter:0, icon:['far','laugh-beam'],  
+        cond(show){return show.Genres?.includes("Comedy")},   
+        click(show) { },
       },
-    };
+      Drama: {
+        color:'blue', filter:0, icon:['far','sad-cry'], 
+        cond(show){return show.Genres?.includes("Drama")},   
+        click(show) { },
+      },
+      Hour: {
+        color:'purple', filter:0, icon:['far','clock'], 
+        cond(show){ return show.RunTimeTicks>(15e9/21)*35 },  
+        click(show) { },
+      },
+      // Played: {
+      //   color:'lime', filter:0, icon:['fas','check'], 
+      //   cond(show){ return !show.Played },  
+      //   click(show) { },
+      // },
+      Unplayed: {
+        color:'#0cf', filter:0, icon:['fas','plus'], 
+        cond(show){ return show.UnplayedItemCount > 0 },  
+        click(show) { },
+      },
+      Favorite: {
+        color:'red', filter:0, icon:['far','heart'], 
+        cond(show){ return show.IsFavorite },   
+        click(show) { this.toggleFavorite(show) },
+      },
+      Pickup: {
+        color:'#5ff', filter:0, icon:['fas','arrow-down'], 
+        cond(show){ return show.Pickup },   
+        click(show) { this.togglePickup(show) },
+      },
+      Database: {
+        color:'#a66', filter:0, icon:['fas','tv'], 
+        cond(show){ return !show.Id.startsWith("nodb-") },  
+        click(show) { this.deleteShow(show) },
+      }
+    }};
   },
 
-  components: {
-    FontAwesomeIcon,
-  },
 
   /////////////  METHODS  ////////////
   methods: {
@@ -150,13 +139,15 @@ export default {
     },
 
     showInEmby(id) {
-      if (!id.startsWith("nodb-")) window.open(getEmbyUrl(id), id);
+      if(!id.startsWith("nodb-")) 
+        window.open(emby.getEmbyPageUrl(id), id);
     },
 
     toggleFavorite(show) {
      (async () => {
-            show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
-            if (show.Id.startsWith("nodb-")) console.log(show);
+        show.IsFavorite = 
+            await emby.toggleFav(show.Id, show.IsFavorite);
+        // if (show.Id.startsWith("nodb-")) console.log(show);
       })();
     },
 
