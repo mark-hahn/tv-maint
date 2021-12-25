@@ -1,9 +1,8 @@
 <template lang="pug">
 div
-  #hdr(style="border:1px solid black; background-color:#ccc; position:fixed; left:0; top:0;")
+  #hdr
     div(style="margin:3px 10px; display:inline-block;")
-      div(style="display:inline-block;margin-right:10px; font-size:14px; margin-right:20px; font-weight:bold; color:blue") 
-       | TV Series
+      #lbl TV Series
       input(v-model="searchStr" @input="select"
             style="border:1px solid black; width:80px;")
       button(@click="select") search
@@ -12,80 +11,38 @@ div
     div(style="float:right; margin-right:23px;")
       table(style="background-color:white;")
         tr
-          td(style="width:30px; text-align:center;"
-               @click="filter('Comedy')")
-            font-awesome-icon(:icon="['far', 'laugh-beam']")
-          td(style="width:30px; text-align:center;"
-               @click="filter('Drama')")
-            font-awesome-icon(:icon="['far', 'sad-cry']")
-          td(style="width:30px")
-          td
-          td(style="width:30px")
-          td(style="width:30px")
-          td
-          td(style="width:30px")
-          td(style="width:30px")
-          td(style="width:30px")
-
+          td( v-for="cond in conds"
+              style="width:30px;text-align:center;"
+              @click="condFltrClick(cond)" )
+            font-awesome-icon(:icon="cond.icon"
+              :style="{color:cond.color}")
   div(style="margin-top:55px")
     table(style="margin:10px; width:95%; font-size:14px")
       tr(v-for="show in shows" key="show.Id")
-        td(@click="showInEmby(show.Id)" style="padding:4px;") {{ show.Name }}
-        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
-          font-awesome-icon(:icon="['far', 'laugh-beam']"
-            :style="(comedy(show) ? {color:'teal'} : {color:'#ddd'  })")
-        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
-          font-awesome-icon(:icon="['far', 'sad-cry']"
-            :style="(drama(show) ? {color:'blue'} : {color:'#ddd'  })")
-        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
-          font-awesome-icon(:icon="['far', 'clock']"
-            :style="(hour(show) ? {color:'purple'} : {color:'#ddd'  })")
-        td
-        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
-          font-awesome-icon(:icon="['fas', 'check']"
-            :style="(played(show) ? {color:'lime'} : {color:'#ddd'  })")
-        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
-          font-awesome-icon(:icon="['fas', 'plus']"
-            :style="(unplayed(show) ? {color:'#0cf'} : {color:'#ddd'  })")
-        td
-        td(style="width:30px; text-align:center;" @click="toggleFav(show)")
-          font-awesome-icon(:icon="['far', 'heart']"
-            :style="(favorite(show) ? {color:'red'} : {color:'#ddd'  })")
-        td(style="width:30px; text-align:center;" @click="togglePickUp(show)")
-          font-awesome-icon(icon="arrow-down"
-            :style="(pickup(show) ? {color:'#5ff'} : {color:'#ddd'  })")
-        td(style="width:30px; text-align:center;" @click="deleteShow(show)")
-          font-awesome-icon(icon="tv"
-            :style="(database(show) ? {color:'#a66'} : {color:'#ddd'  })")
+        td(@click="showInEmby(show.Id)" 
+            style="padding:4px;") {{ show.Name }}
+        td( v-for="cond in conds" 
+            style="width:30px; text-align:center;"
+           @click="cond.click(show)" )
+          font-awesome-icon(:icon="cond.icon"
+              :style="{color:cond.color}")
 </template>
 
 <script>
+// [cond.icon[0],cond.icon[1]]
+
 import * as emby from "./emby.js";
 
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { library } from "@fortawesome/fontawesome-svg-core";
-import {
-  faLaughBeam,
-  faSadCry,
-  faClock,
-  faHeart,
-} from "@fortawesome/free-regular-svg-icons";
-import { faCheck, faPlus, faArrowDown, faTv } from "@fortawesome/free-solid-svg-icons";
-library.add([
-  faLaughBeam,
-  faSadCry,
-  faClock,
-  faHeart,
-  faCheck,
-  faPlus,
-  faArrowDown,
-  faTv,
-]);
+import { faLaughBeam, faSadCry, faClock, faHeart, } 
+          from "@fortawesome/free-regular-svg-icons";
+import { faCheck, faPlus, faArrowDown, faTv } 
+          from "@fortawesome/free-solid-svg-icons";
+library.add([ faLaughBeam, faSadCry, faClock, faHeart, 
+              faCheck, faPlus, faArrowDown, faTv, ]);
 
 let allShows = [];
-const conds = ['Comedy', 'Drama', 'Hour', 
-               'Played', 'Unplayed', 
-               'Favorite', 'Pickup', 'Database'];
 
 const getEmbyUrl = (id) =>
   `http://hahnca.com:8096/web/index.html
@@ -98,10 +55,52 @@ export default {
     return {
       shows:     [],
       searchStr: "",
-      fltrCond: {
-        Comedy:   0, Drama:    0, Hour:     0,
-        Played:   0, Unplayed: 0,
-        Favorite: 0, Pickup:   0, Database: 0,
+      conds: {
+        Comedy: {
+          color:'teal', filter:0, icon:['far','laugh-beam'],  
+          cond(show){ return show.Genres?.includes("Comedy") },   
+          click(show) { },
+        },
+        Drama: {
+          color:'blue', filter:0, icon:['far','sad-cry'], 
+          cond(show){ return show.Genres?.includes("Drama") },   
+          click(show) { },
+        },
+        Hour: {
+          color:'purple', filter:0, icon:['far','clock'], 
+          cond(show){ return show.RunTimeTicks > (15e9/21)*35 },  
+          click(show) { },
+        },
+        Played: {
+          color:'lime', filter:0, icon:['fas','check'], 
+          cond(show){ return !show.Played },  
+          click(show) {
+          },
+        },
+        Unplayed: {
+          color:'#0cf', filter:0, icon:['fas','plus'], 
+          cond(show){ return show.UnplayedItemCount > 0 },  
+          click(show) {
+          },
+        },
+        Favorite: {
+          color:'red', filter:0, icon:['far','heart'], 
+          cond(show){ return show.IsFavorite },   
+          click(show) { (async () => {
+            show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
+            if (show.Id.startsWith("nodb-")) console.log(show);
+          })()},
+        },
+        Pickup: {
+          color:'#5ff', filter:0, icon:['fas','arrow-down'], 
+          cond(show){ return show.Pickup },   
+          click(show) { this.togglePickup(show) },
+        },
+        Database: {
+          color:'#a66', filter:0, icon:['fas','tv'], 
+          cond(show){ return !show.Id.startsWith("nodb-") },  
+          click(show) { this.deleteShow(show) },
+        }
       },
     };
   },
@@ -110,50 +109,46 @@ export default {
     FontAwesomeIcon,
   },
 
-  /////////////  CONDITIONAL METHODS  ////////////
+  /////////////  METHODS  ////////////
   methods: {
-    comedy(show)   { return show.Genres?.includes("Comedy")},
-    drama(show)    { return show.Genres?.includes("Drama")},
-    hour(show) {// > 35 mins is an hour
-                     return (show.RunTimeTicks > (15000000000/21)*35)},
-    played(show)   { return !show.Played},
-    unplayed(show) { return show.UnplayedItemCount > 0},
-    favorite(show) { return show.IsFavorite},
-    pickup(show)   { return show.Pickup},
-    database(show) { return !show.Id.startsWith("nodb-")},
+    condColor(show, cond) {
+      if(cond.cond(show)) return cond.color;
+      return '#ddd';
+    },
 
+    confFltrClick(cond) {
+      cond.filter++;
+      if(cond.filter == 2) cond.filter = -1;
+      console.log('confFltrClick', cond);
+      this.select();
+    },
 
-    /////////////  FILTER  ////////////
+    condFltrColor(cond) {
+      switch(cond.filter) {
+        case  0: return 'gray';
+        case -1: return '#ddd';
+        case +1: return  cond.color;
+      }
+    },
+
     select() {
       const srchStrLc = ((this.searchStr == "") ? null :
                           this.searchStr.toLowerCase());
       this.shows = allShows.filter((show) => {
         if(srchStrLc && !show.Name.toLowerCase()
                              .includes(srchStrLc)) return false;
-        for(let cond of conds) {
-          if(this.fltrCond[cond] == 0) continue;
-          let state = false;
-          switch(cond) {
-            case 'Comedy': state = this.comedy(show); break;
-            case 'Drama':  state = this.drama(show);  break;
-          }
-          if((this.fltrCond[cond] == +1) != state) return false;
+        for(let cond of this.conds) {
+          if(cond.filter == 0) continue;
+          if((cond.filter == +1) != cond.cond(show)) return false;
         }
         return true;
       });
     },
 
-    filter(cond) {
-      this.fltrCond[cond]++;
-      if(this.fltrCond[cond] == 2) this.fltrCond[cond] = -1;
-      console.log(cond, this.fltrCond[cond]);
-      this.select();
-    },
-
     /////////////////  UPDATE METHODS  /////////////////
     showAll() {
       this.searchStr = "";
-      for(let cond of conds) this.fltrCond[cond] == 0;
+      for(let cond of this.conds) cond.filter == 0;
       this.shows = allShows;
     },
 
@@ -161,21 +156,14 @@ export default {
       if (!id.startsWith("nodb-")) window.open(getEmbyUrl(id), id);
     },
 
-    toggleFav(show) {
-      (async () => {
-        show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
-        if (show.Id.startsWith("nodb-")) console.log(show);
-      })();
-    },
-
-    togglePickUp(show) {
+    togglePickup(show) {
       (async () => {
         show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
         if (!show.Pickup && show.Id.startsWith("nodb-")) {
           console.log("toggled pickUp, removing row", show.Pickup, show.Id);
           this.shows = allShows.filter((s) => s.Id != show.Id);
         }
-      })();
+      })();  
     },
 
     // -------- bug:  removes row on show.pickup (wrong)
@@ -231,5 +219,12 @@ td {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+#hdr { border:1px solid black; background-color:#ccc; 
+       position:fixed; left:0; top:0;
+}
+
+#lbl {display:inline-block; margin-right:10px; 
+      font-size:14px; margin-right:20px; font-weight:bold; color:blue
 }
 </style>
