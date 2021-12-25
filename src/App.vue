@@ -12,7 +12,8 @@ div
     div(style="float:right; margin-right:23px;")
       table(style="background-color:white;")
         tr
-          td(style="width:30px; text-align:center;")
+          td(style="width:30px; text-align:center;"
+             @click="filter('Comedy')")
             font-awesome-icon(:icon="['far', 'laugh-beam']")
           td(style="width:30px")
           td(style="width:30px")
@@ -80,6 +81,9 @@ library.add([
 ]);
 
 let allShows = [];
+const conds = ['Comedy', 'Drama', 'Hour', 
+               'Played', 'Unplayed', 
+               'Favorite', 'Pickup', 'Database'];
 
 const getEmbyUrl = (id) =>
   `http://hahnca.com:8096/web/index.html
@@ -90,17 +94,13 @@ export default {
 
   data() {
     return {
-      shows: [],
+      shows:     [],
       searchStr: "",
-      // fltrDrama:   0,
-      // fltr:   0,
-      // fltr:   0,
-      // fltr:   0,
-      // fltr:   0,
-      // fltr:   0,
-      // fltr:   0,
-      fltrComedy: 0,
-      fltrDatabase: 0,
+      fltrCond: {
+        Comedy:   0, Drama:    0, Hour:     0,
+        Played:   0, Unplayed: 0,
+        Favorite: 0, Pickup:   0, Database: 0,
+      },
     };
   },
 
@@ -140,26 +140,35 @@ export default {
 
     /////////////  FILTER  ////////////
     select() {
-      (async () => {
-        const srchStr = this.searchStr.toLowerCase();
-        // const fltrStr = this.filterStr;
-        // this.shows = allShows.filter(
-        //   (show) =>
-        //     (srchStr == "" || show.Name.toLowerCase().includes(srchStr)) &&
-        //     (show.IsFavorite || fltrStr != "Favorites") &&
-        //     (!show.IsFavorite || fltrStr != "Not Favorites") &&
-        //     (show.Pickup || fltrStr != "Pickups") &&
-        //     (!show.Pickup || fltrStr != "Not Pickups") &&
-        //     (show.Id.startsWith("nodb-") || fltrStr != "Pickups/No Emby")
-        // );
-      })();
+      this.shows = allShows.filter((show) => {
+        if(this.searchStr != "" &&
+            !show.Name.toLowerCase().includes(
+                  this.searchStr.toLowerCase())) return false;
+        for(let cond of conds) {
+          if(this.fltrCond[cond] == 0) continue;
+          let state = false;
+          switch(cond) {
+            case 'Comedy': state = show.Genres.includes('Comedy'); break;
+            case 'Drama':  state = show.Genres.includes('Drama');  break;
+          }
+          if((this.fltrCond[cond] == +1) != state) return false;
+        }
+        return true;
+      });
+    },
+
+    filter(cond) {
+      this.fltrCond[cond]++;
+      if(this.fltrCond[cond] == 2) this.fltrCond[cond] = -1;
+      console.log(cond, this.fltrCond[cond]);
+      this.select();
     },
 
     /////////////////  UPDATE METHODS  /////////////////
     showAll() {
       (async () => {
         this.searchStr = "";
-        // this.filterStr = "No Filter";
+        for(let cond of conds) this.fltrCond[cond] == 0;
         this.shows = allShows;
       })();
     },
@@ -240,7 +249,3 @@ td {
   -moz-osx-font-smoothing: grayscale;
 }
 </style>
-
-/* comedy laugh-beam teal drama sad-cry blue RunTimeTicks clock purple Played check lime
-UnplayedItemCount plus aqua IsFavorite heart red PickUp arrow-down green !nodb- database
-maroon */
