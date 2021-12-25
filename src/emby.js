@@ -82,6 +82,25 @@ export async function toggleFav(id, isFav) {
   return (favRes.status == 200 ? favRes.data.IsFavorite : isFav);
 }
 
+export async function addPickUp(name) {
+  if(name == "") return false;
+  const config = {
+    method: 'post',
+    url: `http://hahnca.com/tv/pickup/` + encodeURI(name),
+  };
+  let pickUpRes;
+  let err = null;
+  try { pickUpRes = await axios(config); }
+  catch (e) { err = e.message; }
+  if(err || pickUpRes?.data !== 'ok') {
+    if(!err) err = pickUpRes?.data;
+    alert('Error: unable to add pickup to server. ' +
+          'Please tell mark.\n\nError: ' + err);
+    return false;
+  }
+  return true;
+}
+
 export async function togglePickUp(name, pickup) {
   const config = {
     method: (pickup ? 'delete' : 'post'),
@@ -98,33 +117,6 @@ export async function togglePickUp(name, pickup) {
   else {
     return !pickup;
   }
-}
-
-export async function replacePickupName(oldName, newName) {
-  const config = {
-    method: 'delete',
-    url:`http://hahnca.com/tv/pickup/` + encodeURI(oldName),
-  };
-  let pickUpRes;
-  let err = 'ok';
-  try { pickUpRes = await axios(config); }
-  catch (e) { err = e.message }
-  if(err !== 'ok' ||  pickUpRes.data !== 'ok') 
-    err = 'Error in replacePickupName delete: ' +
-            pickUpRes.data + ', ' + err;
-  if(err == 'ok') {
-    const config = {
-      method: 'post',
-      url:`http://hahnca.com/tv/pickup/` + encodeURI(newName),
-    };
-    try { pickUpRes = await axios(config); }
-    catch (e) { err = e.message }
-    if(err !== 'ok' ||  pickUpRes.data !== 'ok') 
-      err = 'Error in replacePickupName post: ' +
-             pickUpRes.data + ', ' + err;
-  }
-  if(err !== 'ok') console.log(err);
-  return err;
 }
 
 export async function deleteShow(id) {
