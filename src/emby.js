@@ -26,42 +26,11 @@ export async function init() {
   await getToken('MARK', '90-NBVcvbasd');
 }
 
-export async function toggleFav(id, isFav) {
-  const config = {
-    method: (isFav ? 'delete' : 'post'),
-    url:     getFaveUrl(id),
-  };
-  let favRes;
-  try { favRes = await axios(config); }
-  catch (e) { return isFav; }
-  return (favRes.status == 200 ? favRes.data.IsFavorite : isFav);
-}
-
-export async function togglePickUp(name, pickup) {
-  const config = {
-    method: (pickup ? 'delete' : 'post'),
-    url:    `http://hahnca.com/tv/pickup/` + encodeURI(name),
-  };
-  let pickUpRes;
-  try { pickUpRes = await axios(config); }
-  catch (e) { return pickup; }
-  if(pickUpRes.data !== 'ok') {
-    alert('Error: unable to save change to server. ' +
-          'Please tell mark.\n\nError: ' + pickUpRes.data);
-    return pickup;
-  }
-  else {
-    return !pickup;
-  }
-}
-
 export async function loadAllShows() {
   const showsRes = await axios.get(getShowsUrl());
   const shows = [];
   for(let key in showsRes.data.Items) {
     let item = showsRes.data.Items[key];
-    if(item.Name == 'How About Coffee')
-     console.log(item);
     Object.assign(item, item.UserData);
     delete item.UserData;
     for(const k of ['DateCreated', 'PremiereDate'])
@@ -102,6 +71,35 @@ export async function loadAllShows() {
   return shows;
 }
 
+export async function toggleFav(id, isFav) {
+  const config = {
+    method: (isFav ? 'delete' : 'post'),
+    url:     getFaveUrl(id),
+  };
+  let favRes;
+  try { favRes = await axios(config); }
+  catch (e) { return isFav; }
+  return (favRes.status == 200 ? favRes.data.IsFavorite : isFav);
+}
+
+export async function togglePickUp(name, pickup) {
+  const config = {
+    method: (pickup ? 'delete' : 'post'),
+    url:    `http://hahnca.com/tv/pickup/` + encodeURI(name),
+  };
+  let pickUpRes;
+  try { pickUpRes = await axios(config); }
+  catch (e) { return pickup; }
+  if(pickUpRes.data !== 'ok') {
+    alert('Error: unable to save change to server. ' +
+          'Please tell mark.\n\nError: ' + pickUpRes.data);
+    return pickup;
+  }
+  else {
+    return !pickup;
+  }
+}
+
 export async function deleteShow(id) {
   const delRes = await axios.delete(getDeleteShowUrl(id));
   console.log({delRes});
@@ -116,18 +114,8 @@ export async function deleteShow(id) {
   return err;
 }
 
-function getFaveUrl (id) {
-  return encodeURI(`http://hahnca.com:8096 / emby
-          / Users / 894c752d448f45a3a1260ccaabd0adff 
-          / FavoriteItems / ${id}
-    ?X-Emby-Client=Emby Web
-    &X-Emby-Device-Name=Chrome
-    &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
-    &X-Emby-Client-Version=1.0.0
-    &X-Emby-Token=${token}
-  `.replace(/\s*/g, ""));
-}
 
+/////////////////////  GET URLS  ///////////////////////
 function getShowsUrl (startIdx=0, limit=10000) {
   return `http://hahnca.com:8096 / emby
       / Users / 894c752d448f45a3a1260ccaabd0adff / Items
@@ -146,6 +134,18 @@ function getShowsUrl (startIdx=0, limit=10000) {
     &Limit=${limit}
     &X-Emby-Token=${token}
   `.replace(/\s*/g, "");
+}
+
+function getFaveUrl (id) {
+  return encodeURI(`http://hahnca.com:8096 / emby
+          / Users / 894c752d448f45a3a1260ccaabd0adff 
+          / FavoriteItems / ${id}
+    ?X-Emby-Client=Emby Web
+    &X-Emby-Device-Name=Chrome
+    &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
+    &X-Emby-Client-Version=1.0.0
+    &X-Emby-Token=${token}
+  `.replace(/\s*/g, ""));
 }
 
 function getDeleteShowUrl(id) {

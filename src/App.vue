@@ -31,12 +31,14 @@ div
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'clock']"
             :style="(hour(show) ? {color:'purple'} : {color:'#ddd'  })")
+        td
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['fas', 'check']"
             :style="(played(show) ? {color:'lime'} : {color:'#ddd'  })")
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['fas', 'plus']"
             :style="(unplayed(show) ? {color:'#0cf'} : {color:'#ddd'  })")
+        td
         td(style="width:30px; text-align:center;" @click="toggleFav(show)")
           font-awesome-icon(:icon="['far', 'heart']"
             :style="(favorite(show) ? {color:'red'} : {color:'#ddd'  })")
@@ -49,17 +51,27 @@ div
 </template>
 
 <script>
-
 import * as emby from "./emby.js";
 
-import {FontAwesomeIcon} from "@fortawesome/vue-fontawesome";
-import {library}         from "@fortawesome/fontawesome-svg-core";
-import {faLaughBeam, faSadCry, faClock, faHeart}  
-                         from "@fortawesome/free-regular-svg-icons";
-import {faCheck, faPlus, faArrowDown, faTv} 
-                         from "@fortawesome/free-solid-svg-icons";
-library.add([faLaughBeam, faSadCry, faClock, faHeart, 
-             faCheck, faPlus, faArrowDown, faTv]);
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { library } from "@fortawesome/fontawesome-svg-core";
+import {
+  faLaughBeam,
+  faSadCry,
+  faClock,
+  faHeart,
+} from "@fortawesome/free-regular-svg-icons";
+import { faCheck, faPlus, faArrowDown, faTv } from "@fortawesome/free-solid-svg-icons";
+library.add([
+  faLaughBeam,
+  faSadCry,
+  faClock,
+  faHeart,
+  faCheck,
+  faPlus,
+  faArrowDown,
+  faTv,
+]);
 
 let allShows = [];
 
@@ -81,7 +93,7 @@ export default {
       // fltr:   0,
       // fltr:   0,
       // fltr:   0,
-      fltrComedy:   0,
+      fltrComedy: 0,
       fltrDatabase: 0,
     };
   },
@@ -90,16 +102,37 @@ export default {
     FontAwesomeIcon,
   },
 
+  /////////////  CONDITIONAL METHODS  ////////////
   methods: {
-    comedy  (show) {return( show.Genres?.includes('Comedy'))},
-    drama   (show) {return( show.Genres?.includes('Drama'))},
-    hour    (show) {return(      // > 35 mins is an hour
-             show.RunTimeTicks > (15000000000/21) * 35)},
-    played  (show) {return(!show.Played && this.database(show))},
-    unplayed(show) {return(show.UnplayedItemCount > 0)},
-    favorite(show) {return(show.IsFavorite)},
-    pickup  (show) {return(show.Pickup)},
-    database(show) {return(!show.Id.startsWith('nodb-'))},
+    comedy(show) {
+      return show.Genres?.includes("Comedy");
+    },
+    drama(show) {
+      return show.Genres?.includes("Drama");
+    },
+    hour(show) {
+      return (
+        // > 35 mins is an hour
+        show.RunTimeTicks > (15000000000 / 21) * 35
+      );
+    },
+    played(show) {
+      return !show.Played;
+    },
+    unplayed(show) {
+      return show.UnplayedItemCount > 0;
+    },
+    favorite(show) {
+      return show.IsFavorite;
+    },
+    pickup(show) {
+      return show.Pickup;
+    },
+    database(show) {
+      return !show.Id.startsWith("nodb-");
+    },
+
+    /////////////  FILTER  ////////////
     select() {
       (async () => {
         const srchStr = this.searchStr.toLowerCase();
@@ -116,6 +149,7 @@ export default {
       })();
     },
 
+    /////////////////  UPDATE METHODS  /////////////////
     showAll() {
       (async () => {
         this.searchStr = "";
@@ -138,19 +172,41 @@ export default {
     togglePickUp(show) {
       (async () => {
         show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
+        if (!show.Pickup && show.Id.startsWith("nodb-")) {
+          console.log("toggled pickUp, removing row", show.Pickup, show.Id);
+          this.shows = allShows.filter((s) => s.Id != show.Id);
+        }
       })();
     },
 
+    // -------- bug:  removes row on show.pickup (wrong)
+    //                but doesn't change pickup list
+
     deleteShow(show) {
+      console.log("deleteShow show", show);
+      if (!window.confirm(`Do you really want to delete series ${show.Name} from Emby?`))
+        return;
       (async () => {
         const id = show.Id;
         const res = await emby.deleteShow(id);
-        if(res == 'ok')
+        if (res != "ok") return;
+        if (show.Pickup) {
+          delete show.Genres;
+          show.RunTimeTicks = 0;
+          show.Played = true;  // backwards -- TODO fix
+          show.UnplayedItemCount = 0;
+          show.IsFavorite = false;
+          show.Id = "nodb-" + Date.now();
+          console.log("deleted db, keeping row");
+        } else {
+          console.log("deleted db, removing row");
           this.shows = allShows.filter((show) => show.Id != id);
+        }
       })();
     },
   },
 
+  /////////////////  MOUNTED  /////////////////
   mounted() {
     (async () => {
       await emby.init();
@@ -179,14 +235,6 @@ td {
 }
 </style>
 
-/*
-  comedy             laugh-beam              teal
-  drama              sad-cry                 blue
-  RunTimeTicks       clock                   purple
-  Played             check                   lime
-  UnplayedItemCount  plus                    aqua
-  IsFavorite         heart                   red
-  PickUp             arrow-down              green
-  !nodb-             database                maroon
-*/
-
+/* comedy laugh-beam teal drama sad-cry blue RunTimeTicks clock purple Played check lime
+UnplayedItemCount plus aqua IsFavorite heart red PickUp arrow-down green !nodb- database
+maroon */
