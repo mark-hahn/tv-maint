@@ -112,33 +112,16 @@ export default {
 
   /////////////  CONDITIONAL METHODS  ////////////
   methods: {
-    comedy(show) {
-      return show.Genres?.includes("Comedy");
-    },
-    drama(show) {
-      return show.Genres?.includes("Drama");
-    },
-    hour(show) {
-      return (
-        // > 35 mins is an hour
-        show.RunTimeTicks > (15000000000 / 21) * 35
-      );
-    },
-    played(show) {
-      return !show.Played;
-    },
-    unplayed(show) {
-      return show.UnplayedItemCount > 0;
-    },
-    favorite(show) {
-      return show.IsFavorite;
-    },
-    pickup(show) {
-      return show.Pickup;
-    },
-    database(show) {
-      return !show.Id.startsWith("nodb-");
-    },
+    comedy(show)   { return show.Genres?.includes("Comedy")},
+    drama(show)    { return show.Genres?.includes("Drama")},
+    hour(show) {// > 35 mins is an hour
+                     return (show.RunTimeTicks > (15000000000/21)*35)},
+    played(show)   { return !show.Played},
+    unplayed(show) { return show.UnplayedItemCount > 0},
+    favorite(show) { return show.IsFavorite},
+    pickup(show)   { return show.Pickup},
+    database(show) { return !show.Id.startsWith("nodb-")},
+
 
     /////////////  FILTER  ////////////
     select() {
@@ -151,8 +134,8 @@ export default {
           if(this.fltrCond[cond] == 0) continue;
           let state = false;
           switch(cond) {
-            case 'Comedy': state = show.Genres?.includes('Comedy'); break;
-            case 'Drama':  state = show.Genres?.includes('Drama');  break;
+            case 'Comedy': state = this.comedy(show); break;
+            case 'Drama':  state = this.drama(show);  break;
           }
           if((this.fltrCond[cond] == +1) != state) return false;
         }
