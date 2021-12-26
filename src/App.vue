@@ -25,7 +25,8 @@ div
   div(style="margin-top:55px; width:100%;")
     table(style="padding:0 5px; width:100%; font-size:14px")
       tr.show-row(v-for="show in shows" key="show.Id")
-        td(style="padding:4px;") {{show.Name}} {{show.Id}}
+        td(style="padding:4px;" 
+           @click="showInEmby(show)") {{show.Name}}
         td( v-for="cond in conds" 
             style="width:30px; text-align:center;"
            @click="cond.click(show)" )
@@ -39,12 +40,11 @@ import * as emby from "./emby.js";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { faLaughBeam, faSadCry, faClock, faHeart} 
-                   from "@fortawesome/free-regular-svg-icons";
-import { faCheck, faPlus, faArrowDown, faTv, faSearch} 
-                   from "@fortawesome/free-solid-svg-icons";
+         from "@fortawesome/free-regular-svg-icons";
+import { faCheck, faPlus, faArrowDown, faTv, faSearch, } 
+         from "@fortawesome/free-solid-svg-icons";
 library.add([ faLaughBeam, faSadCry, faClock, faHeart,
-              faCheck, faPlus, faArrowDown, faTv, faSearch,
-]);
+              faCheck, faPlus, faArrowDown, faTv, faSearch]);
 
 let allShows = [];
 
@@ -58,22 +58,20 @@ export default {
     };
 
     const togglePickup = async (show) => {
-      show.Pickup = await emby.togglePickUp(
-                            show.Name, show.Pickup);
+      show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
       if (!show.Pickup && show.Id.startsWith("nodb-")) {
         console.log("toggled pickUp, removing row");
         const id = show.Id;
         allShows = allShows.filter((show) => show.Id != id);
         this.shows = allShows;
       }
-    }
+    };
 
     // -------- bug:  removes row on show.pickup (wrong)
     //                but doesn't change pickup list
     const deleteShowFromEmby = async (show) => {
       console.log("deleteShowFromEmby show", show);
-      if (!window.confirm(
-        `Do you really want to delete series ${show.Name} from Emby?`))
+      if (!window.confirm(`Do you really want to delete series ${show.Name} from Emby?`))
         return;
       const id = show.Id;
       const res = await emby.deleteShowFromEmby(id);
@@ -107,14 +105,12 @@ export default {
           cond(show) { return show.Genres?.includes("Drama"); },
           click(show) {},
         },
-        {
-          color: "purple", filter: 0,
+        { color: "purple", filter: 0,
           icon: ["far", "clock"],
           cond(show) { return show.RunTimeTicks > (15e9 / 21) * 35; },
           click(show) {},
         },
-        // {
-        //   color:'lime', filter:0, icon:['fas','check'],
+        // { color:'lime', filter:0, icon:['fas','check'],
         //   cond(show){ return !show.Played },
         //   click(show) { },
         // },
@@ -139,7 +135,7 @@ export default {
           click(show) { deleteShowFromEmby(show); },
         },
       ],
-    }
+    };
   },
 
   /////////////  METHODS  ////////////
@@ -165,14 +161,14 @@ export default {
       }
       if (name && emby.addPickUp(name)) {
         allShows.push({
-          Name:   name,
+          Name: name,
           Pickup: true,
-          Id: "nodb-" +  Math.random(),
+          Id: "nodb-" + Math.random(),
         });
-        allShows.sort((a,b) => {
-          const aname = a.Name.replace(/The\s/i, '');
-          const bname = b.Name.replace(/The\s/i, '');
-          return (aname.toLowerCase() > bname.toLowerCase() ? +1 : -1);
+        allShows.sort((a, b) => {
+          const aname = a.Name.replace(/The\s/i, "");
+          const bname = b.Name.replace(/The\s/i, "");
+          return aname.toLowerCase() > bname.toLowerCase() ? +1 : -1;
         });
         this.searchStr = name;
         this.select();
@@ -187,14 +183,12 @@ export default {
     },
 
     select() {
-      const srchStrLc =
-        (this.searchStr == "" ? null : this.searchStr.toLowerCase());
+      const srchStrLc = this.searchStr == "" ? null : this.searchStr.toLowerCase();
       this.shows = allShows.filter((show) => {
         if (srchStrLc && !show.Name.toLowerCase().includes(srchStrLc)) return false;
         for (let cond of this.conds) {
-          if (cond.filter ==  0) continue;
-          if((cond.filter == +1) != cond.cond(show)) 
-            return false;
+          if (cond.filter == 0) continue;
+          if ((cond.filter == +1) != cond.cond(show)) return false;
         }
         return true;
       });
@@ -212,7 +206,7 @@ export default {
     },
   },
 
-/////////////////  MOUNTED  /////////////////
+  /////////////////  MOUNTED  /////////////////
   mounted() {
     (async () => {
       await emby.init();
