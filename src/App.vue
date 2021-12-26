@@ -198,13 +198,10 @@ export default {
 
     copyNameToClipboard (show) {
       const hash = this.nameHash(show.Name);
-      // const range = document.createRange();
-      // range.selectNode(document.getElementById(hash));
       const ele = document.getElementById(hash);
-      window.getSelection().
-          selectAllChildren(ele);
-      console.log(`copying ${ele.innerText.trim()} to clipboard`);
-      document.execCommand("copy");
+      const text = ele.innerText.trim();
+      console.log(`copying ${text} to clipboard`);
+      navigator.clipboard.writeText(text)
     },
 
     condFltrClick(cond) {
