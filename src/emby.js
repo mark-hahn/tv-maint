@@ -27,7 +27,7 @@ export async function init() {
 }
 
 export async function loadAllShows() {
-  const showsRes = await axios.get(getShowsUrl());
+  const showsRes = await axios.get(showListUrl());
   const shows = [];
   for(let key in showsRes.data.Items) {
     let item = showsRes.data.Items[key];
@@ -39,7 +39,7 @@ export async function loadAllShows() {
   }
   // console.log(shows);
   const showNames = shows.map(show => show.Name);
-  // console.log(showNames);
+  
   const pickups = (await axios.get(
         'http://hahnca.com/tv/series.json')).data;
   for(let pickup of pickups) {
@@ -61,11 +61,19 @@ export async function loadAllShows() {
       // console.log('added', shows[shows.length-1]);
     }
   }
+  const collRes = await axios.get(collectionListUrl());
+  const collIds = [];
+  for(let item of collRes.data.Items)
+    collIds.push(item.Id);
+  for(let show of shows)
+    show.InToTry = collIds.includes(show.Id);
+
   shows.sort((a,b) => {
     const aname = a.Name.replace(/The\s/i, '');
     const bname = b.Name.replace(/The\s/i, '');
     return (aname.toLowerCase() > bname.toLowerCase() ? +1 : -1);
   });
+  
   console.log('all shows loaded');
   // console.log(shows);
   return shows;
@@ -74,7 +82,7 @@ export async function loadAllShows() {
 export async function toggleFav(id, isFav) {
   const config = {
     method: (isFav ? 'delete' : 'post'),
-    url:     getFaveUrl(id),
+    url:     forvoriteUrl(id),
   };
   let favRes;
   try { favRes = await axios(config); }
@@ -120,7 +128,7 @@ export async function togglePickUp(name, pickup) {
 }
 
 export async function deleteShowFromEmby(id) {
-  const delRes = await axios.delete(getDeleteShowUrl(id));
+  const delRes = await axios.delete(deleteShowUrl(id));
   console.log({delRes});
   const res = delRes.status;
   console.log('deleteShowFromEmby', res);
@@ -134,8 +142,8 @@ export async function deleteShowFromEmby(id) {
 }
 
 
-/////////////////////  GET URLS  ///////////////////////
-function getShowsUrl (startIdx=0, limit=10000) {
+/////////////////////  URLS  ///////////////////////
+function showListUrl (startIdx=0, limit=10000) {
   return `http://hahnca.com:8096 / emby
       / Users / 894c752d448f45a3a1260ccaabd0adff / Items
     ?SortBy=SortName
@@ -155,7 +163,7 @@ function getShowsUrl (startIdx=0, limit=10000) {
   `.replace(/\s*/g, "");
 }
 
-function getFaveUrl (id) {
+function forvoriteUrl (id) {
   return encodeURI(`http://hahnca.com:8096 / emby
           / Users / 894c752d448f45a3a1260ccaabd0adff 
           / FavoriteItems / ${id}
@@ -167,7 +175,7 @@ function getFaveUrl (id) {
   `.replace(/\s*/g, ""));
 }
 
-function getDeleteShowUrl(id) {
+function deleteShowUrl(id) {
   return `http://hahnca.com:8096 / emby / Items / ${id}
     ?X-Emby-Client=EmbyWeb
     &X-Emby-Device-Name=Chrome
@@ -177,9 +185,24 @@ function getDeleteShowUrl(id) {
   `.replace(/\s*/g, "");
 }
 
-export function getEmbyPageUrl(id) {
+export function embyPageUrl(id) {
   return `http://hahnca.com:8096 / web / index.html #! / item
     ?id=${id}&serverId=ae3349983dbe45d9aa1d317a7753483e
+    `.replace(/\s*/g, "");
+}
+
+function collectionListUrl() {
+  return `http://hahnca.com:8096 / emby / Users / 
+          894c752d448f45a3a1260ccaabd0adff / Items
+    ?ParentId=1468316
+    &ImageTypeLimit=1
+    &Fields=PrimaryImageAspectRatio,ProductionYear,CanDelete
+    &EnableTotalRecordCount=false
+    &X-Emby-Client=EmbyWeb
+    &X-Emby-Device-Name=Chrome
+    &X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b
+    &X-Emby-Client-Version=4.6.4.0
+    &X-Emby-Token=${token}
     `.replace(/\s*/g, "");
 }
 

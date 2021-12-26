@@ -41,10 +41,11 @@ import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { faLaughBeam, faSadCry, faClock, faHeart} 
          from "@fortawesome/free-regular-svg-icons";
-import { faCheck, faPlus, faArrowDown, faTv, faSearch, } 
+import { faCheck, faPlus, faArrowDown, faTv, 
+         faSearch, faQuestion} 
          from "@fortawesome/free-solid-svg-icons";
 library.add([ faLaughBeam, faSadCry, faClock, faHeart,
-              faCheck, faPlus, faArrowDown, faTv, faSearch]);
+              faCheck, faPlus, faArrowDown, faTv, faSearch, faQuestion]);
 
 let allShows = [];
 
@@ -112,6 +113,11 @@ export default {
           icon: ["fas", "plus"],
           cond(show) { return show.UnplayedItemCount > 0; },
           click(show) {},
+        },
+        { color: "lime", filter: 0,
+          icon: ["fas", "question"],
+          cond(show) { return show.InToTry; },
+          click(show) { },
         },
         { color: "red", filter: 0,
           icon: ["far", "heart"],
@@ -197,7 +203,7 @@ export default {
 
     showInEmby(show) {
       if(!show.Id.startsWith('nodb-'))
-        window.open(emby.getEmbyPageUrl(show.Id), show.Id);
+        window.open(emby.embyPageUrl(show.Id), show.Id);
     },
   },
 
