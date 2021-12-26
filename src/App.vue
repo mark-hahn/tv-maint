@@ -26,6 +26,9 @@ div
     table(style="padding:0 5px; width:100%; font-size:14px")
       tr.show-row(v-for="show in shows"  key="show.Id"
                     :id="nameHash(show.Name)")
+        td(style="width:30px; text-align:center;"
+           @click="copyNameToClipboard(show)" )
+          font-awesome-icon(icon="copy" style="color:#ccc")
         td(style="padding:4px;" :ref="show.Name" 
            @click="showInEmby(show)") {{show.Name}}
         td( v-for="cond in conds" 
@@ -43,10 +46,10 @@ import { library } from "@fortawesome/fontawesome-svg-core";
 import { faLaughBeam, faSadCry, faClock, faHeart} 
          from "@fortawesome/free-regular-svg-icons";
 import { faCheck, faPlus, faArrowDown, faTv, 
-         faSearch, faQuestion} 
+         faSearch, faQuestion, faCopy} 
          from "@fortawesome/free-solid-svg-icons";
 library.add([ faLaughBeam, faSadCry, faClock, faHeart,
-              faCheck, faPlus, faArrowDown, faTv, faSearch, faQuestion]);
+              faCheck, faPlus, faArrowDown, faTv, faSearch, faQuestion, faCopy]);
 
 let allShows = [];
 
@@ -191,6 +194,17 @@ export default {
           }
         }
       });
+    },
+
+    copyNameToClipboard (show) {
+      const hash = this.nameHash(show.Name);
+      // const range = document.createRange();
+      // range.selectNode(document.getElementById(hash));
+      const ele = document.getElementById(hash);
+      window.getSelection().
+          selectAllChildren(ele);
+      console.log(`copying ${ele.innerText.trim()} to clipboard`);
+      document.execCommand("copy");
     },
 
     condFltrClick(cond) {
