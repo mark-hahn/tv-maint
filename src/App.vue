@@ -9,8 +9,8 @@ div
         font-awesome-icon(icon="search")
       input(v-model="pkupEditName" 
             style="border:1px solid black; margin-left:20px; width:100px;"
-             @change="savePkupName")
-      button(@click="savePkupName") +
+             @change="addPickUp")
+      button(@click="addPickUp") +
       button(@click="showAll" style="margin-left:20px") 
         | Show All
     div(style="width:100%;")
@@ -58,23 +58,25 @@ export default {
     };
 
     const togglePickup = async (show) => {
-      show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
+      show.Pickup = await emby.togglePickUp(
+                            show.Name, show.Pickup);
       if (!show.Pickup && show.Id.startsWith("nodb-")) {
         console.log("toggled pickUp, removing row");
         const id = show.Id;
-        this.shows = allShows.filter((show) => show.Id != id);
+        allShows = allShows.filter((show) => show.Id != id);
+        this.shows = allShows;
       }
     }
 
     // -------- bug:  removes row on show.pickup (wrong)
     //                but doesn't change pickup list
-    const deleteShow = async (show) => {
-      console.log("deleteShow show", show);
+    const deleteShowFromEmby = async (show) => {
+      console.log("deleteShowFromEmby show", show);
       if (!window.confirm(
         `Do you really want to delete series ${show.Name} from Emby?`))
         return;
       const id = show.Id;
-      const res = await emby.deleteShow(id);
+      const res = await emby.deleteShowFromEmby(id);
       if (res != "ok") return;
       if (show.Pickup) {
         delete show.Genres;
@@ -134,7 +136,7 @@ export default {
         { color: "#a66", filter: 0,
           icon: ["fas", "tv"],
           cond(show) { return !show.Id.startsWith("nodb-"); },
-          click(show) { deleteShow(show); },
+          click(show) { deleteShowFromEmby(show); },
         },
       ],
     }
@@ -143,9 +145,7 @@ export default {
   /////////////  METHODS  ////////////
   methods: {
     condFltrClick(cond) {
-      cond.filter++;
-      if (cond.filter == 2) cond.filter = -1;
-      console.log("condFltrClick", cond);
+      if (++cond.filter == 2) cond.filter = -1;
       this.select();
     },
 
@@ -157,7 +157,7 @@ export default {
       }
     },
 
-    savePkupName() {
+    addPickUp() {
       const name = this.pkupEditName;
       console.log("adding pickup", name);
       if (allShows.some((show) => show.Name == name)) {
@@ -166,9 +166,14 @@ export default {
       }
       if (name && emby.addPickUp(name)) {
         allShows.push({
-          Name: name,
+          Name:   name,
           Pickup: true,
           Id: "nodb-" +  Math.random(),
+        });
+        allShows.sort((a,b) => {
+          const aname = a.Name.replace(/The\s/i, '');
+          const bname = b.Name.replace(/The\s/i, '');
+          return (aname.toLowerCase() > bname.toLowerCase() ? +1 : -1);
         });
         this.searchStr = name;
         this.select();
@@ -213,7 +218,6 @@ export default {
     (async () => {
       await emby.init();
       allShows = await emby.loadAllShows();
-      for (let show of this.shows) show.editingPickupName = false;
       this.shows = allShows;
       // console.log(allShows[0]);
     })();
