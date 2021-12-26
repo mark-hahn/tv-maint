@@ -185,6 +185,47 @@ export function getEmbyPageUrl(id) {
 
 /*
 
+[
+  {
+    "Name": "to-try",
+    "ServerId": "ae3349983dbe45d9aa1d317a7753483e",
+    "Id": "1468316",
+    "CanDelete": true,
+    "IsFolder": true,
+    "Type": "BoxSet",
+    "UserData": {
+      "PlaybackPositionTicks": 0,
+      "PlayCount": 0,
+      "IsFavorite": false,
+      "Played": false
+    },
+    "PrimaryImageAspectRatio": 0.6666666666666666,
+    "ImageTags": {
+      "Primary": "f12fa256e8dd75df8c74fd3e27e91a5c"
+    },
+    "BackdropImageTags": []
+  }
+]
+
+------      get items in TO-TRY collection  -----------
+http://hahnca.com:8096/emby/Users/894c752d448f45a3a1260ccaabd0adff/Items?ParentId=1468316&ImageTypeLimit=1&Fields=PrimaryImageAspectRatio,ProductionYear,CanDelete&EnableTotalRecordCount=false&X-Emby-Client=Emby Web&X-Emby-Device-Name=Chrome&X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b&X-Emby-Client-Version=4.6.4.0&X-Emby-Token=1e2f0f8dec6c4e039eaaa9657438bb6d
+
+------      add item to TO-TRY collection  -----------
+Id: "4487588"
+Name: "Yellowstone (2018)"
+
+POST
+http://hahnca.com:8096/emby/Collections/1468316/Items?Ids=4487588&userId=894c752d448f45a3a1260ccaabd0adff&X-Emby-Client=Emby Web&X-Emby-Device-Name=Chrome&X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b&X-Emby-Client-Version=4.6.4.0&X-Emby-Token=1e2f0f8dec6c4e039eaaa9657438bb6d
+
+------      delete item from TO-TRY collection  -----------
+Id: "3705964"
+Name: "Cleaning Up"
+
+DELETE
+http://hahnca.com:8096/emby/Collections/1468316/Items?Ids=3705964&X-Emby-Client=Emby Web&X-Emby-Device-Name=Chrome&X-Emby-Device-Id=f4079adb-6e48-4d54-9185-5d92d3b7176b&X-Emby-Client-Version=4.6.4.0&X-Emby-Token=1e2f0f8dec6c4e039eaaa9657438bb6d
+
+
+
 AirDays: []
 BackdropImageTags: ["dd2d6479fc843d9a6e834d3f3f965ffe"]
 CanDelete: true
