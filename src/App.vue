@@ -172,6 +172,7 @@ export default {
         const ele = document.getElementById(id);
         if(ele) {
           ele.scrollIntoView(true);
+          const hdrEle = document.getElementById('hdr');
           window.scrollBy(0,-80);
         }
         else {
@@ -253,6 +254,7 @@ export default {
       for (let cond of this.conds) cond.filter == 0;
       this.shows = allShows;
       this.saveVisShow(allShows[0].Name);
+      this.scrollSavedVisShowIntoView();
     },
 
     showInEmby(show) {
