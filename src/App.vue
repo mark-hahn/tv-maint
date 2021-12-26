@@ -22,10 +22,11 @@ div
               @click="condFltrClick(cond)" )
             font-awesome-icon(:icon="cond.icon"
               :style="{color:condFltrColor(cond)}")
-  div(style="margin-top:55px; width:100%;")
+  div(style="margin-top:85px; width:100%;")
     table(style="padding:0 5px; width:100%; font-size:14px")
-      tr.show-row(v-for="show in shows" key="show.Id")
-        td(style="padding:4px;" 
+      tr.show-row(v-for="show in shows"  key="show.Id"
+                    :id="nameHash(show.Name)")
+        td(style="padding:4px;" :ref="show.Name" 
            @click="showInEmby(show)") {{show.Name}}
         td( v-for="cond in conds" 
             style="width:30px; text-align:center;"
@@ -54,11 +55,13 @@ export default {
   components: { FontAwesomeIcon },
   data() {
     const toggleFavorite = async (show) => {
+      this.saveVisShow(show.Name);
       show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
       // if (show.Id.startsWith("nodb-")) console.log(show);
     };
 
     const togglePickup = async (show) => {
+      this.saveVisShow(show.Name);
       show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
       if (!show.Pickup && show.Id.startsWith("nodb-")) {
         console.log("toggled pickUp, removing row");
@@ -69,11 +72,13 @@ export default {
     };
 
     const toggleToTry = async (show) => {
+      this.saveVisShow(show.Name);
       show.InToTry = 
         await emby.toggleToTry(show.Id, show.InToTry);
     };
 
     const deleteShowFromEmby = async (show) => {
+      this.saveVisShow(show.Name);
       console.log("deleteShowFromEmby show", show);
       if(!window.confirm(
           `Do you really want to delete series ${show.Name} from Emby?`))
@@ -91,6 +96,7 @@ export default {
       } else {
         console.log("deleted db, removing row");
         this.shows = allShows.filter((show) => show.Id != id);
+        this.scrollSavedVisShowIntoView();
       }
     };
 
@@ -146,6 +152,46 @@ export default {
 
   /////////////  METHODS  ////////////
   methods: {
+    nameHash (name) {
+      return 'name-' + name
+        .replace(/[^a-zA-Z0-9]*/g, '')
+        .toLowerCase();
+    },
+
+    saveVisShow (name) {
+      const hash = this.nameHash(name);
+      console.log(`saving ${hash} as last visible show`);
+      window.localStorage.setItem(
+          'lastVisShow', hash);
+    },
+
+    scrollSavedVisShowIntoView () {
+      this.$nextTick(() => {
+        const id = window.localStorage.getItem('lastVisShow');
+        console.log(`srolling ${id} into view`);
+        const ele = document.getElementById(id);
+        if(ele) {
+          ele.scrollIntoView(true);
+          window.scrollBy(0,-80);
+        }
+        else {
+          console.log(`show ${id} not in show list, finding nearest match`);
+          for(let show of this.shows) {
+            const hash = this.nameHash(show.Name);
+            if(hash > id) {
+              const ele = document.getElementById(hash);
+              if(ele) {
+                ele.scrollIntoView(true);
+                window.scrollBy(0,-160);
+                this.saveVisShow(show.Name);
+              }
+              break;
+            }
+          }
+        }
+      });
+    },
+
     condFltrClick(cond) {
       if (++cond.filter == 2) cond.filter = -1;
       this.select();
@@ -198,6 +244,7 @@ export default {
         }
         return true;
       });
+      this.scrollSavedVisShowIntoView();
     },
 
     /////////////////  UPDATE METHODS  /////////////////
@@ -205,9 +252,11 @@ export default {
       this.searchStr = "";
       for (let cond of this.conds) cond.filter == 0;
       this.shows = allShows;
+      this.saveVisShow(allShows[0].Name);
     },
 
     showInEmby(show) {
+      this.saveVisShow(show.Name);
       if(!show.Id.startsWith('nodb-'))
         window.open(emby.embyPageUrl(show.Id), show.Id);
     },
@@ -219,7 +268,10 @@ export default {
       await emby.init();
       allShows = await emby.loadAllShows();
       this.shows = allShows;
-      // console.log(allShows[0]);
+      if(!window.localStorage.getItem('lastVisShow'))
+        this.saveVisShow(allShows[0].Name);
+      else  
+        this.scrollSavedVisShowIntoView();
     })();
   },
 };
