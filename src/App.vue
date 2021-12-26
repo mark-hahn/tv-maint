@@ -67,11 +67,10 @@ export default {
       }
     };
 
-    // -------- bug:  removes row on show.pickup (wrong)
-    //                but doesn't change pickup list
     const deleteShowFromEmby = async (show) => {
       console.log("deleteShowFromEmby show", show);
-      if (!window.confirm(`Do you really want to delete series ${show.Name} from Emby?`))
+      if(!window.confirm(
+          `Do you really want to delete series ${show.Name} from Emby?`))
         return;
       const id = show.Id;
       const res = await emby.deleteShowFromEmby(id);
@@ -79,10 +78,9 @@ export default {
       if (show.Pickup) {
         delete show.Genres;
         show.RunTimeTicks = 0;
-        show.Played = true; // backwards -- TODO fix
         show.UnplayedItemCount = 0;
         show.IsFavorite = false;
-        show.Id = "nodb-" + Date.now();
+        show.Id = "nodb-" + Math.random();
         console.log("deleted db, keeping row");
       } else {
         console.log("deleted db, removing row");
@@ -110,10 +108,6 @@ export default {
           cond(show) { return show.RunTimeTicks > (15e9 / 21) * 35; },
           click(show) {},
         },
-        // { color:'lime', filter:0, icon:['fas','check'],
-        //   cond(show){ return !show.Played },
-        //   click(show) { },
-        // },
         { color: "#0cf", filter: 0,
           icon: ["fas", "plus"],
           cond(show) { return show.UnplayedItemCount > 0; },
@@ -202,7 +196,8 @@ export default {
     },
 
     showInEmby(show) {
-      window.open(emby.getEmbyPageUrl(show.Id), show.Id);
+      if(!show.Id.startsWith('nodb-'))
+        window.open(emby.getEmbyPageUrl(show.Id), show.Id);
     },
   },
 

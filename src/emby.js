@@ -119,11 +119,11 @@ export async function togglePickUp(name, pickup) {
   }
 }
 
-export async function deleteShow(id) {
+export async function deleteShowFromEmby(id) {
   const delRes = await axios.delete(getDeleteShowUrl(id));
   console.log({delRes});
   const res = delRes.status;
-  console.log('deleteShow', res);
+  console.log('deleteShowFromEmby', res);
   let err = 'ok';
   if(res != 204) {
     err = 'Error: unable to delete show. ' +
