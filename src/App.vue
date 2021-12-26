@@ -68,6 +68,11 @@ export default {
       }
     };
 
+    const toggleToTry = async (show) => {
+      show.InToTry = 
+        await emby.toggleToTry(show.Id, show.InToTry);
+    };
+
     const deleteShowFromEmby = async (show) => {
       console.log("deleteShowFromEmby show", show);
       if(!window.confirm(
@@ -96,7 +101,7 @@ export default {
       conds: [
         { color: "teal", filter: 0,
           icon: ["far", "laugh-beam"],
-          cond(show) { return show.Genres?.includes("Comedy"); },
+          cond(show)  { return show.Genres?.includes("Comedy"); },
           click(show) {},
         },
         { color: "blue", filter: 0,
@@ -106,32 +111,33 @@ export default {
         },
         { color: "purple", filter: 0,
           icon: ["far", "clock"],
-          cond(show) { return show.RunTimeTicks > (15e9 / 21) * 35; },
+          cond(show) { 
+              return show.RunTimeTicks > (15e9 / 21) * 35; },
           click(show) {},
         },
         { color: "#0cf", filter: 0,
           icon: ["fas", "plus"],
-          cond(show) { return show.UnplayedItemCount > 0; },
+          cond(show)  { return show.UnplayedItemCount > 0; },
           click(show) {},
         },
         { color: "lime", filter: 0,
           icon: ["fas", "question"],
-          cond(show) { return show.InToTry; },
-          click(show) { },
+          cond(show)  { return show.InToTry },
+          click(show) { toggleToTry(show) },
         },
         { color: "red", filter: 0,
           icon: ["far", "heart"],
-          cond(show) { return show.IsFavorite; },
+          cond(show)  { return show.IsFavorite },
           click(show) { toggleFavorite(show); },
         },
         { color: "#5ff", filter: 0,
           icon: ["fas", "arrow-down"],
-          cond(show) { return show.Pickup; },
+          cond(show)  { return show.Pickup; },
           click(show) { togglePickup(show); },
         },
         { color: "#a66", filter: 0,
           icon: ["fas", "tv"],
-          cond(show) { return !show.Id.startsWith("nodb-"); },
+          cond(show)  { return !show.Id.startsWith("nodb-"); },
           click(show) { deleteShowFromEmby(show); },
         },
       ],
