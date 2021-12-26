@@ -159,7 +159,6 @@ export default {
 
     addPickUp() {
       const name = this.pkupEditName;
-      console.log("adding pickup", name);
       if (allShows.some((show) => show.Name == name)) {
         console.log("skipping duplicate show name", name);
         return;

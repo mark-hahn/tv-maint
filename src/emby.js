@@ -40,13 +40,13 @@ export async function loadAllShows() {
   // console.log(shows);
   const showNames = shows.map(show => show.Name);
   // console.log(showNames);
-  const configSeries = (await axios.get(
+  const pickups = (await axios.get(
         'http://hahnca.com/tv/series.json')).data;
-  for(let series of configSeries) {
-    // console.log(series);
+  for(let pickup of pickups) {
+    // console.log(pickup);
     let gotPickup = false;
     for(let showName of showNames) {
-      if(showName == series) {
+      if(showName == pickup) {
         const show = shows.find(show => show.Name == showName);
         show.Pickup = true;
         gotPickup = true;
@@ -54,7 +54,7 @@ export async function loadAllShows() {
     }
     if(!gotPickup) {
       shows.push( {
-        Name:  series,
+        Name:  pickup,
         Pickup:true,
         Id:   'nodb-' + Math.random(),
       });
