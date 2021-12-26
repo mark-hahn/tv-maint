@@ -25,7 +25,7 @@ div
   div(style="margin-top:55px; width:100%;")
     table(style="padding:0 5px; width:100%; font-size:14px")
       tr.show-row(v-for="show in shows" key="show.Id")
-        td(style="padding:4px;") {{show.Name }}
+        td(style="padding:4px;") {{show.Name}} {{show.Id}}
         td( v-for="cond in conds" 
             style="width:30px; text-align:center;"
            @click="cond.click(show)" )
@@ -48,128 +48,96 @@ library.add([ faLaughBeam, faSadCry, faClock, faHeart,
 
 let allShows = [];
 
-const toggleFavorite = async (show) => {
-  show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
-  // if (show.Id.startsWith("nodb-")) console.log(show);
-}
-
-const togglePickup = async (show) => {
-  show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
-  if (!show.Pickup && show.Id.startsWith("nodb-")) {
-    console.log("toggled pickUp, removing row", show.Pickup, show.Id);
-    this.shows = allShows.filter((s) => s.Id != show.Id);
-  }
-}
-
-// -------- bug:  removes row on show.pickup (wrong)
-//                but doesn't change pickup list
-const deleteShow = async (show) => {
-  console.log("deleteShow show", show);
-  if (!window.confirm(
-    `Do you really want to delete series ${show.Name} from Emby?`))
-    return;
-  const id = show.Id;
-  const res = await emby.deleteShow(id);
-  if (res != "ok") return;
-  if (show.Pickup) {
-    delete show.Genres;
-    show.RunTimeTicks = 0;
-    show.Played = true; // backwards -- TODO fix
-    show.UnplayedItemCount = 0;
-    show.IsFavorite = false;
-    show.Id = "nodb-" + Date.now();
-    console.log("deleted db, keeping row");
-  } else {
-    console.log("deleted db, removing row");
-    this.shows = allShows.filter((show) => show.Id != id);
-  }
-}
-
 export default {
   name: "App",
   components: { FontAwesomeIcon },
   data() {
+    const toggleFavorite = async (show) => {
+      show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
+      // if (show.Id.startsWith("nodb-")) console.log(show);
+    };
+
+    const togglePickup = async (show) => {
+      show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
+      if (!show.Pickup && show.Id.startsWith("nodb-")) {
+        console.log("toggled pickUp, removing row");
+        const id = show.Id;
+        this.shows = allShows.filter((show) => show.Id != id);
+      }
+    }
+
+    // -------- bug:  removes row on show.pickup (wrong)
+    //                but doesn't change pickup list
+    const deleteShow = async (show) => {
+      console.log("deleteShow show", show);
+      if (!window.confirm(
+        `Do you really want to delete series ${show.Name} from Emby?`))
+        return;
+      const id = show.Id;
+      const res = await emby.deleteShow(id);
+      if (res != "ok") return;
+      if (show.Pickup) {
+        delete show.Genres;
+        show.RunTimeTicks = 0;
+        show.Played = true; // backwards -- TODO fix
+        show.UnplayedItemCount = 0;
+        show.IsFavorite = false;
+        show.Id = "nodb-" + Date.now();
+        console.log("deleted db, keeping row");
+      } else {
+        console.log("deleted db, removing row");
+        this.shows = allShows.filter((show) => show.Id != id);
+      }
+    };
+
     return {
       shows: [],
       searchStr: "",
       pkupEditName: "",
-      conds: {
-        Comedy: {
-          color: "teal",
-          filter: 0,
+      conds: [
+        { color: "teal", filter: 0,
           icon: ["far", "laugh-beam"],
-          cond(show) {
-            return show.Genres?.includes("Comedy");
-          },
+          cond(show) { return show.Genres?.includes("Comedy"); },
           click(show) {},
         },
-        Drama: {
-          color: "blue",
-          filter: 0,
+        { color: "blue", filter: 0,
           icon: ["far", "sad-cry"],
-          cond(show) {
-            return show.Genres?.includes("Drama");
-          },
+          cond(show) { return show.Genres?.includes("Drama"); },
           click(show) {},
         },
-        Hour: {
-          color: "purple",
-          filter: 0,
+        {
+          color: "purple", filter: 0,
           icon: ["far", "clock"],
-          cond(show) {
-            return show.RunTimeTicks > (15e9 / 21) * 35;
-          },
+          cond(show) { return show.RunTimeTicks > (15e9 / 21) * 35; },
           click(show) {},
         },
-        // Played: {
+        // {
         //   color:'lime', filter:0, icon:['fas','check'],
         //   cond(show){ return !show.Played },
         //   click(show) { },
         // },
-        Unplayed: {
-          color: "#0cf",
-          filter: 0,
+        { color: "#0cf", filter: 0,
           icon: ["fas", "plus"],
-          cond(show) {
-            return show.UnplayedItemCount > 0;
-          },
+          cond(show) { return show.UnplayedItemCount > 0; },
           click(show) {},
         },
-        Favorite: {
-          color: "red",
-          filter: 0,
+        { color: "red", filter: 0,
           icon: ["far", "heart"],
-          cond(show) {
-            return show.IsFavorite;
-          },
-          click(show) {
-            toggleFavorite(show);
-          },
+          cond(show) { return show.IsFavorite; },
+          click(show) { toggleFavorite(show); },
         },
-        Pickup: {
-          color: "#5ff",
-          filter: 0,
+        { color: "#5ff", filter: 0,
           icon: ["fas", "arrow-down"],
-          cond(show) {
-            return show.Pickup;
-          },
-          click(show) {
-            togglePickup(show);
-          },
+          cond(show) { return show.Pickup; },
+          click(show) { togglePickup(show); },
         },
-        Database: {
-          color: "#a66",
-          filter: 0,
+        { color: "#a66", filter: 0,
           icon: ["fas", "tv"],
-          cond(show) {
-            return !show.Id.startsWith("nodb-");
-          },
-          click(show) {
-            deleteShow(show);
-          },
+          cond(show) { return !show.Id.startsWith("nodb-"); },
+          click(show) { deleteShow(show); },
         },
-      },
-    };
+      ],
+    }
   },
 
   /////////////  METHODS  ////////////
@@ -183,17 +151,15 @@ export default {
 
     condFltrColor(cond) {
       switch (cond.filter) {
-        case 0:
-          return "gray";
-        case -1:
-          return "#ddd";
-        case +1:
-          return cond.color;
+        case  0: return "gray";
+        case -1: return "#ddd";
+        case +1: return cond.color;
       }
     },
 
     savePkupName() {
       const name = this.pkupEditName;
+      console.log("adding pickup", name);
       if (allShows.some((show) => show.Name == name)) {
         console.log("skipping duplicate show name", name);
         return;
@@ -202,7 +168,7 @@ export default {
         allShows.push({
           Name: name,
           Pickup: true,
-          Id: "nodb-" + Date.now(),
+          Id: "nodb-" +  Math.random(),
         });
         this.searchStr = name;
         this.select();
@@ -221,10 +187,10 @@ export default {
         (this.searchStr == "" ? null : this.searchStr.toLowerCase());
       this.shows = allShows.filter((show) => {
         if (srchStrLc && !show.Name.toLowerCase().includes(srchStrLc)) return false;
-        for (let key in this.conds) {
-          const cond = this.conds[key];
-          if (cond.filter == 0) continue;
-          if ((cond.filter == +1) != cond.cond(show)) return false;
+        for (let cond of this.conds) {
+          if (cond.filter ==  0) continue;
+          if((cond.filter == +1) != cond.cond(show)) 
+            return false;
         }
         return true;
       });
@@ -237,10 +203,8 @@ export default {
       this.shows = allShows;
     },
 
-    showNameClick(show) {
-      for (let show of this.shows) show.editingPickupName = false;
-      if (show.Id.startsWith("nodb-")) show.editingPickupName = true;
-      else window.open(emby.getEmbyPageUrl(show.Id), show.Id);
+    showInEmby(show) {
+      window.open(emby.getEmbyPageUrl(show.Id), show.Id);
     },
   },
 

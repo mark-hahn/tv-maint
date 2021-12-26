@@ -56,7 +56,7 @@ export async function loadAllShows() {
       shows.push( {
         Name:  series,
         Pickup:true,
-        Id:   'nodb-' + Date.now(),
+        Id:   'nodb-' + Math.random(),
       });
       // console.log('added', shows[shows.length-1]);
     }
