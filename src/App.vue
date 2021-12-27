@@ -39,6 +39,9 @@ div
 </template>
 
 <script>
+/*
+  deleting show doesn't scroll right
+*/
 import * as emby from "./emby.js";
 
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -82,7 +85,7 @@ export default {
 
     const deleteShowFromEmby = async (show) => {
       this.saveVisShow(show.Name);
-      console.log("deleteShowFromEmby show", show);
+      console.log("delete Show From Emby:", show.Name);
       if(!window.confirm(
           `Do you really want to delete series ${show.Name} from Emby?`))
         return;
@@ -98,7 +101,8 @@ export default {
         console.log("deleted db, keeping row");
       } else {
         console.log("deleted db, removing row");
-        this.shows = allShows.filter((show) => show.Id != id);
+        allShows = allShows.filter((show) => show.Id != id);
+        this.shows = allShows;
         this.scrollSavedVisShowIntoView();
       }
     };
@@ -157,8 +161,9 @@ export default {
   methods: {
     nameHash (name) {
       return 'name-' + name
-        .replace(/[^a-zA-Z0-9]*/g, '')
-        .toLowerCase();
+        .toLowerCase()
+        .replace(/^the\s/, '')
+        .replace(/[^a-zA-Z0-9]*/g, '');
     },
 
     saveVisShow (name) {
