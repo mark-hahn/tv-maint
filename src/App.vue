@@ -15,7 +15,9 @@ div
         | Show All
     div(style="width:100%;")
       table(style="background-color:white; padding:0 14px; width:100%;")
-        tr
+        tr  
+          button(@click="sortClick") 
+            | Sort
           td(style="padding:0 4px;text-align:right;") Filters:
           td( v-for="cond in conds"
               :style="{width:'30px',textAlign:'center'}"
@@ -29,7 +31,9 @@ div
         td(style="width:30px; text-align:center;"
            @click="copyNameToClipboard(show)" )
           font-awesome-icon(icon="copy" style="color:#ccc")
-        td(style="padding:4px;" :ref="show.Name" 
+        td(v-if="sortByDate" style="width:50px") {{show.date}}
+        td(:ref="show.Name" 
+          :style="{padding:'4px', backgroundColor: highlightName == show.Name ? 'yellow' : 'white'}"
            @click="showInEmby(show)") {{show.Name}}
         td( v-for="cond in conds" 
             style="width:30px; text-align:center;"
@@ -39,11 +43,8 @@ div
 </template>
 
 <script>
-/*
-  deleting show doesn't scroll right
-*/
-import * as emby from "./emby.js";
 
+import * as emby from "./emby.js";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { faLaughBeam, faSadCry, faClock, faHeart} 
@@ -55,6 +56,7 @@ library.add([ faLaughBeam, faSadCry, faClock, faHeart,
               faCheck, faPlus, faArrowDown, faTv, faSearch, faQuestion, faCopy]);
 
 let allShows = [];
+let dates    = null;
 
 export default {
   name: "App",
@@ -111,6 +113,9 @@ export default {
       shows: [],
       searchStr: "",
       pkupEditName: "",
+      sortByDate: false,
+      highlightName: "",
+
       conds: [
         { color: "teal", filter: 0,
           icon: ["far", "laugh-beam"],
@@ -122,12 +127,12 @@ export default {
           cond(show) { return show.Genres?.includes("Drama"); },
           click(show) {},
         },
-        { color: "purple", filter: 0,
-          icon: ["far", "clock"],
-          cond(show) { 
-              return show.RunTimeTicks > (15e9 / 21) * 35; },
-          click(show) {},
-        },
+        // { color: "purple", filter: 0,
+        //   icon: ["far", "clock"],
+        //   cond(show) { 
+        //       return show.RunTimeTicks > (15e9 / 21) * 35; },
+        //   click(show) {},
+        // },
         { color: "#0cf", filter: 0,
           icon: ["fas", "plus"],
           cond(show)  { return show.UnplayedItemCount > 0; },
@@ -169,13 +174,30 @@ export default {
     saveVisShow (name) {
       const hash = this.nameHash(name);
       console.log(`saving ${hash} as last visible show`);
-      window.localStorage.setItem(
-          'lastVisShow', hash);
+      this.highlightName = name;
+      window.localStorage.setItem('lastVisShow', name);
+    },
+
+    async sortClick () {
+      if(!dates) {
+        dates = (await emby.loadDates());
+          console.log(dates);
+        for(let show of allShows) {
+          show.date = dates[this.nameHash(show.Name)];
+          if(!show.date) show.date = '01/01/01';
+          // console.log(show.date);
+        }
+      }
+      this.sortByDate = !this.sortByDate;
+      this.sortShows();
+      this.showAll();
     },
 
     scrollSavedVisShowIntoView () {
       this.$nextTick(() => {
-        const id = window.localStorage.getItem('lastVisShow');
+        const name = window.localStorage.getItem('lastVisShow');
+        const id = this.nameHash(name);
+        this.highlightName = name;
         console.log(`srolling ${id} into view`);
         const ele = document.getElementById(id);
         if(ele) {
@@ -207,6 +229,7 @@ export default {
       const text = ele.innerText.trim();
       console.log(`copying ${text} to clipboard`);
       navigator.clipboard.writeText(text)
+      this.saveVisShow(show.Name);
     },
 
     condFltrClick(cond) {
@@ -222,6 +245,19 @@ export default {
       }
     },
 
+    sortShows() {
+      allShows.sort((a, b) => {
+        if (this.sortByDate)
+          return a.date > b.date ? -1 : +1;
+        else {
+          const aname = a.Name.replace(/The\s/i, "");
+          const bname = b.Name.replace(/The\s/i, "");
+          return aname.toLowerCase() > bname.toLowerCase() 
+                  ? +1 : -1;
+        }
+      });
+    },
+
     addPickUp() {
       const name = this.pkupEditName;
       if (allShows.some((show) => show.Name == name)) {
@@ -234,13 +270,10 @@ export default {
           Pickup: true,
           Id: "nodb-" + Math.random(),
         });
-        allShows.sort((a, b) => {
-          const aname = a.Name.replace(/The\s/i, "");
-          const bname = b.Name.replace(/The\s/i, "");
-          return aname.toLowerCase() > bname.toLowerCase() ? +1 : -1;
-        });
-        this.searchStr = name;
-        this.select();
+        this.highlightName = name;
+        this.sortShows();
+        this.saveVisShow(name);
+        this.scrollSavedVisShowIntoView();
         console.log("added pickup", name);
       }
       this.pkupEditName = "";
@@ -269,7 +302,9 @@ export default {
       this.searchStr = "";
       for (let cond of this.conds) cond.filter == 0;
       this.shows = allShows;
-      this.saveVisShow(allShows[0].Name);
+      const name = allShows[0].Name;
+      this.saveVisShow(name);
+      this.highlightName = name;
       this.scrollSavedVisShowIntoView();
     },
 
@@ -280,15 +315,21 @@ export default {
     },
   },
 
+
   /////////////////  MOUNTED  /////////////////
   mounted() {
     (async () => {
       await emby.init();
       allShows = await emby.loadAllShows();
       this.shows = allShows;
-      if(!window.localStorage.getItem('lastVisShow'))
-        this.saveVisShow(allShows[0].Name);
-      else  
+      const lastVisShow = 
+        this.nameHash(window.localStorage.getItem('lastVisShow'));
+      if(!lastVisShow) {
+        const name = allShows[0].Name;
+        this.highlightName = name;
+        this.saveVisShow(name);
+      }
+      else 
         this.scrollSavedVisShowIntoView();
     })();
   },

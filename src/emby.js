@@ -26,6 +26,12 @@ export async function init() {
   await getToken('MARK', '90-NBVcvbasd');
 }
 
+export async function loadDates() {
+  const dates = (await axios.get(
+        'http://hahnca.com/tv/folderDates')).data;
+  return dates;
+}
+
 export async function loadAllShows() {
   const showsRes = await axios.get(showListUrl());
   const shows = [];
