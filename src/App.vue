@@ -56,6 +56,8 @@ library.add([ faLaughBeam, faSadCry, faClock, faHeart,
 
 let allShows = [];
 let dates    = null;
+let embyWin  = null;
+let imdbWin  = null;
 
 export default {
   name: "App",
@@ -308,19 +310,23 @@ export default {
     },
 
     async showInExternal(show, event) {
-      console.log('showInExternal', show.ExternalUrls, event);
+      console.log('showInExternal', show);
       this.saveVisShow(show.Name);
       if(!show.Id.startsWith('nodb-')) {
         if(event.ctrlKey) {
+          if(imdbWin) imdbWin.close();
           const providers = await emby.providers(show);
           if(providers?.Imdb) {
             const url = 
               `https://www.imdb.com/title/${providers.Imdb}`;
-            window.open(url, 'imdbWebPage');
+            imdbWin = window.open(url, 'imdbWebPage');
           }
         }
-        else
-          window.open(emby.embyPageUrl(show.Id), 'embyWebPage');
+        else {
+          if(embyWin) embyWin.close();
+          embyWin =
+            window.open(emby.embyPageUrl(show.Id), 'embyWebPage');
+        }
       }
     }
   },
