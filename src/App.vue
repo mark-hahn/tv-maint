@@ -32,9 +32,8 @@ div
            @click="copyNameToClipboard(show)" )
           font-awesome-icon(icon="copy" style="color:#ccc")
         td(v-if="sortByDate" style="width:50px") {{show.date}}
-        td(:ref="show.Name" 
-          :style="{padding:'4px', backgroundColor: highlightName == show.Name ? 'yellow' : 'white'}"
-           @click="showInEmby(show)") {{show.Name}}
+        td( :style="{padding:'4px', backgroundColor: highlightName == show.Name ? 'yellow' : 'white'}"
+           @click="showInExternal(show, $event)") {{show.Name}}
         td( v-for="cond in conds" 
             style="width:30px; text-align:center;"
            @click="cond.click(show)" )
@@ -308,11 +307,24 @@ export default {
       this.scrollSavedVisShowIntoView();
     },
 
-    showInEmby(show) {
+    showInExternal(show, event) {
+      console.log('showInExternal', show.ExternalUrls, event);
       this.saveVisShow(show.Name);
-      if(!show.Id.startsWith('nodb-'))
-        window.open(emby.embyPageUrl(show.Id), show.Id);
-    },
+      if(!show.Id.startsWith('nodb-')) {
+        if(event.altKey || event.ctrlKey) {
+          const urls = show.ExternalUrls;
+          if(urls) {
+            const wiki = event.altKey;
+            let url = urls.find((url) => 
+              url.Name == (wiki ? 'Wikipedia' : 'IMDb' ));
+            if(!url) url = urls[0];
+            if(url) window.open(url.Url, 'extWebPage');
+          }
+        }
+        else
+          window.open(emby.embyPageUrl(show.Id), 'extWebPage');
+      }
+    }
   },
 
 

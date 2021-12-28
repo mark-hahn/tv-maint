@@ -4,8 +4,8 @@ const markUsrId = "894c752d448f45a3a1260ccaabd0adff";
 const authHdr = 'UserId="894c752d448f45a3a1260ccaabd0adff", ' +
                 'Client="MyClient", Device="myDevice", '      +
                 'DeviceId="123456", Version="1.0.0"';
-const fields = ['Name', 'Id', 'IsFavorite', 'Played', 'RunTimeTicks',
-                'UnplayedItemCount', "DateCreated", "ExternalUrls",
+const fields = ['Name', 'Id', 'IsFavorite', 'Played',
+                'RunTimeTicks', 'UnplayedItemCount', "DateCreated", "ExternalUrls",
                 "Genres","Overview","Path","People","PremiereDate"];
 let token = '';
 
@@ -41,6 +41,9 @@ export async function loadAllShows() {
     delete item.UserData;
     for(const k of ['DateCreated', 'PremiereDate'])
       if(item[k]) item[k] = item[k].replace(/T.*/, '');
+    // if(item.Name == 'Everybody Loves Raymond')
+    if(item.ExternalUrls.length > 0)
+      console.log(item.Name, item.ExternalUrls);
     shows.push(item);
   }
   // console.log(shows);
