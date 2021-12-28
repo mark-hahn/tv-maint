@@ -307,22 +307,20 @@ export default {
       this.scrollSavedVisShowIntoView();
     },
 
-    showInExternal(show, event) {
+    async showInExternal(show, event) {
       console.log('showInExternal', show.ExternalUrls, event);
       this.saveVisShow(show.Name);
       if(!show.Id.startsWith('nodb-')) {
-        if(event.altKey || event.ctrlKey) {
-          const urls = show.ExternalUrls;
-          if(urls) {
-            const wiki = event.altKey;
-            let url = urls.find((url) => 
-              url.Name == (wiki ? 'Wikipedia' : 'IMDb' ));
-            if(!url) url = urls[0];
-            if(url) window.open(url.Url, 'extWebPage');
+        if(event.ctrlKey) {
+          const providers = await emby.providers(show);
+          if(providers?.Imdb) {
+            const url = 
+              `https://www.imdb.com/title/${providers.Imdb}`;
+            window.open(url, 'imdbWebPage');
           }
         }
         else
-          window.open(emby.embyPageUrl(show.Id), 'extWebPage');
+          window.open(emby.embyPageUrl(show.Id), 'embyWebPage');
       }
     }
   },
