@@ -16,8 +16,10 @@ div
     div(style="width:100%;")
       table(style="background-color:white; padding:0 14px; width:100%;")
         tr  
-          button(@click="sortClick") 
-            | Sort
+          td() {{shows.length + '/' + allShowsLength}}
+          td
+            button(@click="sortClick") 
+              | Sort
           td(style="padding:0 4px;text-align:right;") Filters:
           td( v-for="cond in conds"
               :style="{width:'30px',textAlign:'center'}"
@@ -116,6 +118,7 @@ export default {
       pkupEditName: "",
       sortByDate: false,
       highlightName: "",
+      allShowsLength: 0,
 
       conds: [
         { color: "teal", filter: 0,
@@ -166,6 +169,7 @@ export default {
   /////////////  METHODS  ////////////
   methods: {
     nameHash (name) {
+      this.allShowsLength = allShows.length;
       return 'name-' + name
         .toLowerCase()
         .replace(/^the\s/, '')
