@@ -16,7 +16,7 @@ div
     div(style="width:100%;")
       table(style="background-color:white; padding:0 14px; width:100%;")
         tr  
-          td() {{shows.length + '/' + allShowsLength}}
+          td(style="width:40px;font-size:small;") {{shows.length + '/' + allShowsLength}}
           td
             button(@click="sortClick") 
               | Sort
