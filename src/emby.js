@@ -34,9 +34,13 @@ export async function init() {
 }
 
 export async function loadDates() {
-  const dates = (await axios.get(
+  return (await axios.get(
         'http://hahnca.com/tv/folderDates')).data;
-  return dates;
+}
+
+export async function recentDates() {
+  return (await axios.get(
+        'http://hahnca.com/tv/recentDates')).data;
 }
 
 export async function loadAllShows() {

@@ -16,10 +16,16 @@ div
     div(style="width:100%;")
       table(style="background-color:white; padding:0 14px; width:100%;")
         tr  
-          td(style="width:40px;font-size:small;") {{shows.length + '/' + allShowsLength}}
-          td
-            button(@click="sortClick") 
-              | Sort
+          td(style="width:60px;font-size:small;") 
+            | {{shows.length + '/' + allShowsLength}}
+          td(style="width:75px;")
+            button(@click="sortClick" style="width:65px; text-align:right;") Sort By:
+          td(v-if="sortByDate"
+             style="width:30px; text-align:left; font-size:small;") Date
+          td(v-else-if="sortByRecent" 
+             style="width:30px; text-align:left; font-size:small;") Recent
+          td(v-else                   
+             style="width:30px; text-align:left; font-size:small;") Alpha
           td(style="padding:0 4px;text-align:right;") Filters:
           td( v-for="cond in conds"
               :style="{width:'30px',textAlign:'center'}"
@@ -28,13 +34,13 @@ div
               :style="{color:condFltrColor(cond)}")
   div(style="margin-top:85px; width:100%;")
     table(style="padding:0 5px; width:100%; font-size:14px")
-      tr.show-row(v-for="show in shows"  key="show.Id"
-                    :id="nameHash(show.Name)")
+      tr.show-row(v-for="show in shows"  key="show.Id")
         td(style="width:30px; text-align:center;"
-           @click="copyNameToClipboard(show)" )
+           @click="copyNameToClipboard(show)")
           font-awesome-icon(icon="copy" style="color:#ccc")
-        td(v-if="sortByDate" style="width:50px") {{show.date}}
-        td( :style="{padding:'4px', backgroundColor: highlightName == show.Name ? 'yellow' : 'white'}"
+        td(v-if="sortByDate || sortByRecent" style="width:50px;font-size:12px;") 
+          | {{ sortByDate ? show.date : show.recentDate }}
+        td( :style="{padding:'4px', backgroundColor: highlightName == show.Name ? 'yellow' : 'white'}" :id="nameHash(show.Name)"
            @click="showInExternal(show, $event)") {{show.Name}}
         td( v-for="cond in conds" 
             style="width:30px; text-align:center;"
@@ -56,10 +62,11 @@ import { faCheck, faPlus, faArrowDown, faTv,
 library.add([ faLaughBeam, faSadCry, faClock, faHeart,
               faCheck, faPlus, faArrowDown, faTv, faSearch, faQuestion, faCopy]);
 
-let allShows = [];
-let dates    = null;
-let embyWin  = null;
-let imdbWin  = null;
+let allShows    = [];
+let dates       = null;
+let recentDates = null;
+let embyWin     = null;
+let imdbWin     = null;
 
 export default {
   name: "App",
@@ -114,9 +121,10 @@ export default {
 
     return {
       shows: [],
-      searchStr: "",
-      pkupEditName: "",
-      sortByDate: false,
+      searchStr:     "",
+      pkupEditName:  "",
+      sortByDate:    false,
+      sortByRecent:  false,
       highlightName: "",
       allShowsLength: 0,
 
@@ -184,16 +192,33 @@ export default {
     },
 
     async sortClick () {
-      if(!dates) {
-        dates = (await emby.loadDates());
-          console.log(dates);
-        for(let show of allShows) {
-          show.date = dates[this.nameHash(show.Name)];
-          if(!show.date) show.date = '01/01/01';
-          // console.log(show.date);
+      if(this.sortByRecent)
+        this.sortByRecent = false;
+      else if(this.sortByDate) {
+        this.sortByDate   = false;
+        this.sortByRecent = true;
+        if(!recentDates) {
+          recentDates = (await emby.recentDates());
+          console.log('loaded recentDates', recentDates);
+          for(let show of allShows) {
+            show.recentDate = recentDates[this.nameHash(show.Name)];
+            if(!show.recentDate) show.recentDate = '01/01/01';
+            // console.log(show.date);
+          }
         }
       }
-      this.sortByDate = !this.sortByDate;
+      else {
+        this.sortByDate = true;
+        if(!dates) {
+          dates = (await emby.loadDates());
+          console.log('loaded dates', dates);
+          for(let show of allShows) {
+            show.date = dates[this.nameHash(show.Name)];
+            if(!show.date) show.date = '01/01/01';
+            // console.log(show.date);
+          }
+        }
+      }
       this.sortShows();
       this.showAll();
     },
@@ -254,6 +279,8 @@ export default {
       allShows.sort((a, b) => {
         if (this.sortByDate)
           return a.date > b.date ? -1 : +1;
+        else if (this.sortByRecent)
+          return a.recentDate > b.recentDate ? -1 : +1;
         else {
           const aname = a.Name.replace(/The\s/i, "");
           const bname = b.Name.replace(/The\s/i, "");
