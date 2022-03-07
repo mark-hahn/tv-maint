@@ -32,46 +32,82 @@ div
               @click="condFltrClick(cond)" )
             font-awesome-icon(:icon="cond.icon"
               :style="{color:condFltrColor(cond)}")
+
   div(style="margin-top:85px; width:100%;")
     table(style="padding:0 5px; width:100%; font-size:14px")
-      tr.show-row(v-for="show in shows"  key="show.Id")
+      tr(v-for="show in shows" key="show.Id" style="outline:thin solid;")
         td(style="width:30px; text-align:center;"
-           @click="copyNameToClipboard(show)")
+             @click="copyNameToClipboard(show)")
           font-awesome-icon(icon="copy" style="color:#ccc")
+        td(style="width:30px; text-align:center;" )
+          div(v-show="!show.Id.startsWith('nodb-')" 
+                 @click="openSeriesMap(show)")
+            font-awesome-icon(icon="border-all" style="color:#ccc")
         td(v-if="sortByDate || sortByRecent" style="width:50px;font-size:12px;") 
           | {{ sortByDate ? show.date : show.recentDate }}
-        td( :style="{padding:'4px', backgroundColor: highlightName == show.Name ? 'yellow' : 'white'}" :id="nameHash(show.Name)"
-           @click="showInExternal(show, $event)") {{show.Name}}
+        td(@click="showInExternal(show, $event)"
+           :style="{padding:'4px', backgroundColor: highlightName == show.Name ? 'yellow' : 'white'}" :id="nameHash(show.Name)") {{show.Name}}
         td( v-for="cond in conds" 
             style="width:30px; text-align:center;"
            @click="cond.click(show)" )
           font-awesome-icon(:icon="cond.icon"
               :style="{color:condColor(show,cond)}")
+
+  #map(v-if="seriesMapName !== null" 
+        style="width:60%; background-color:#eee; padding:20px;"
+        @click="closeSeriesMap()")
+    div {{seriesMapName}}
+    table(style="padding:0 5px; width:100%; font-size:14px" )
+      tr(style="font-weight:bold;")
+        td
+        td(v-for="episode in seriesMapEpis" style="width:30px; text-align:center;"
+              key="episode") {{episode}}
+      tr(v-for="season in seriesMapSeasons" key="season" style="outline:thin solid;")
+        td(style="font-weight:bold; width:20px; text-align:left;") {{season}}
+        td(v-for="episode in seriesMapEpis" 
+           :style="{width:'30px', textAlign:'center', backgroundColor:(seriesMap?.[season]?.[episode]?.missing ? 'red' : (seriesMap?.gap?.[0] == season && seriesMap?.gap?.[1] == episode ? 'yellow' : 'white'))}"
+              key="episode")
+          span(v-if="seriesMap?.[season]?.[episode]?.played")  p
+          span(v-if="seriesMap?.[season]?.[episode]?.avail")   +
+          span(v-if="seriesMap?.[season]?.[episode]?.missing") -
+          span(v-if="seriesMap?.[season]?.[episode]?.unaired") u
 </template>
 
 <script>
-
-import * as emby from "./emby.js";
+import * as emby           from "./emby.js";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { library } from "@fortawesome/fontawesome-svg-core";
-import { faLaughBeam, faSadCry, faClock, faHeart} 
-         from "@fortawesome/free-regular-svg-icons";
-import { faCheck, faPlus, faArrowDown, faTv, 
-         faSearch, faQuestion, faCopy} 
-         from "@fortawesome/free-solid-svg-icons";
-library.add([ faLaughBeam, faSadCry, faClock, faHeart,
-              faCheck, faPlus, faArrowDown, faTv, faSearch, faQuestion, faCopy]);
-
-let allShows    = [];
-let dates       = null;
+import { library }         from "@fortawesome/fontawesome-svg-core";
+import { faLaughBeam, faSadCry, faClock, faHeart, } 
+                           from "@fortawesome/free-regular-svg-icons"; 
+import { faCheck, faPlus, faMinus, faArrowDown, 
+         faTv, faSearch, faQuestion, faCopy, faBorderAll} 
+                           from "@fortawesome/free-solid-svg-icons";
+library.add([  
+  faLaughBeam, faSadCry, faClock, faHeart, faCheck, faPlus, 
+  faMinus, faArrowDown, faTv, faSearch, faQuestion, faCopy, faBorderAll, ]);
+ 
+let allShows = [];
+let dates = null;
 let recentDates = null;
-let embyWin     = null;
-let imdbWin     = null;
+let embyWin = null;
+let imdbWin = null;
 
 export default {
   name: "App",
   components: { FontAwesomeIcon },
   data() {
+    const findGap = async (show) => {
+      this.saveVisShow(show.Name);
+      if (show.gap) {
+        await emby.addGap(show.Name, show.gap[0], show.gap[1]);
+        const gap = await emby.findGap(show.Name, show.Id);
+        if (gap) {
+          show.gap = gap;
+          console.log("updated gap", { series: show.Name, gap: show.gap });
+        }
+      }
+    };
+
     const toggleFavorite = async (show) => {
       this.saveVisShow(show.Name);
       show.IsFavorite = await emby.toggleFav(show.Id, show.IsFavorite);
@@ -91,15 +127,13 @@ export default {
 
     const toggleToTry = async (show) => {
       this.saveVisShow(show.Name);
-      show.InToTry = 
-        await emby.toggleToTry(show.Id, show.InToTry);
+      show.InToTry = await emby.toggleToTry(show.Id, show.InToTry);
     };
 
     const deleteShowFromEmby = async (show) => {
       this.saveVisShow(show.Name);
       console.log("delete Show From Emby:", show.Name);
-      if(!window.confirm(
-          `Do you really want to delete series ${show.Name} from Emby?`))
+      if (!window.confirm(`Do you really want to delete series ${show.Name} from Emby?`))
         return;
       const id = show.Id;
       const res = await emby.deleteShowFromEmby(id);
@@ -120,54 +154,57 @@ export default {
     };
 
     return {
-      shows: [],
-      searchStr:     "",
-      pkupEditName:  "",
+      shows:            [],
+      searchStr:        "",
+      pkupEditName:     "",
       sortByDate:    false,
       sortByRecent:  false,
-      highlightName: "",
-      allShowsLength: 0,
+      highlightName:    "",
+      allShowsLength:    0,
+      seriesMapName:  null,
+      seriesMapSeasons: [],
+      seriesMapEpis:    [],
+      seriesMap:        {},
 
-      conds: [
-        { color: "teal", filter: 0,
-          icon: ["far", "laugh-beam"],
-          cond(show)  { return show.Genres?.includes("Comedy"); },
+      conds: [ {
+          color: "teal", filter: 0, icon: ["far", "laugh-beam"],
+          cond(show) { return show.Genres?.includes("Comedy"); },
           click(show) {},
-        },
-        { color: "blue", filter: 0,
-          icon: ["far", "sad-cry"],
+        }, {
+          color: "blue", filter: 0, icon: ["far", "sad-cry"],
           cond(show) { return show.Genres?.includes("Drama"); },
           click(show) {},
         },
         // { color: "purple", filter: 0,
         //   icon: ["far", "clock"],
-        //   cond(show) { 
+        //   cond(show) {
         //       return show.RunTimeTicks > (15e9 / 21) * 35; },
         //   click(show) {},
         // },
-        { color: "#0cf", filter: 0,
-          icon: ["fas", "plus"],
-          cond(show)  { return show.UnplayedItemCount > 0; },
+        {
+          color: "#0cf", filter: 0, icon: ["fas", "plus"],
+          cond(show) { return show.UnplayedItemCount > 0; },
           click(show) {},
-        },
-        { color: "lime", filter: 0,
-          icon: ["fas", "question"],
-          cond(show)  { return show.InToTry },
-          click(show) { toggleToTry(show) },
-        },
-        { color: "red", filter: 0,
-          icon: ["far", "heart"],
-          cond(show)  { return show.IsFavorite },
+        }, {
+          color: "#f88", filter: 0, icon: ["fas", "minus"],
+          cond(show) { return !!show.gap; },
+          click(show) { findGap(show);
+          },
+        }, {
+          color: "lime", filter: 0, icon: ["fas", "question"],
+          cond(show) { return show.InToTry; },
+          click(show) { toggleToTry(show); },
+        }, {
+          color: "red", filter: 0, icon: ["far", "heart"],
+          cond(show) { return show.IsFavorite; },
           click(show) { toggleFavorite(show); },
-        },
-        { color: "#5ff", filter: 0,
-          icon: ["fas", "arrow-down"],
-          cond(show)  { return show.Pickup; },
+        }, {
+          color: "#5ff", filter: 0, icon: ["fas", "arrow-down"],
+          cond(show) { return show.Pickup; },
           click(show) { togglePickup(show); },
-        },
-        { color: "#a66", filter: 0,
-          icon: ["fas", "tv"],
-          cond(show)  { return !show.Id.startsWith("nodb-"); },
+        }, {
+          color: "#a66", filter: 0, icon: ["fas", "tv"],
+          cond(show) { return !show.Id.startsWith("nodb-"); },
           click(show) { deleteShowFromEmby(show); },
         },
       ],
@@ -176,45 +213,46 @@ export default {
 
   /////////////  METHODS  ////////////
   methods: {
-    nameHash (name) {
+    nameHash(name) {
       this.allShowsLength = allShows.length;
-      return 'name-' + name
-        .toLowerCase()
-        .replace(/^the\s/, '')
-        .replace(/[^a-zA-Z0-9]*/g, '');
+      return (
+        "name-" +
+        name
+          .toLowerCase()
+          .replace(/^the\s/, "")
+          .replace(/[^a-zA-Z0-9]*/g, "")
+      );
     },
 
-    saveVisShow (name) {
+    saveVisShow(name) {
       const hash = this.nameHash(name);
       console.log(`saving ${hash} as last visible show`);
       this.highlightName = name;
-      window.localStorage.setItem('lastVisShow', name);
+      window.localStorage.setItem("lastVisShow", name);
     },
 
-    async sortClick () {
-      if(this.sortByRecent)
-        this.sortByRecent = false;
-      else if(this.sortByDate) {
-        this.sortByDate   = false;
+    async sortClick() {
+      if (this.sortByRecent) this.sortByRecent = false;
+      else if (this.sortByDate) {
+        this.sortByDate = false;
         this.sortByRecent = true;
-        if(!recentDates) {
-          recentDates = (await emby.recentDates());
-          console.log('loaded recentDates', recentDates);
-          for(let show of allShows) {
+        if (!recentDates) {
+          recentDates = await emby.recentDates();
+          console.log("loaded recentDates", recentDates);
+          for (let show of allShows) {
             show.recentDate = recentDates[this.nameHash(show.Name)];
-            if(!show.recentDate) show.recentDate = '01/01/01';
+            if (!show.recentDate) show.recentDate = "01/01/01";
             // console.log(show.date);
           }
         }
-      }
-      else {
+      } else {
         this.sortByDate = true;
-        if(!dates) {
-          dates = (await emby.loadDates());
-          console.log('loaded dates', dates);
-          for(let show of allShows) {
+        if (!dates) {
+          dates = await emby.loadDates();
+          console.log("loaded dates", dates);
+          for (let show of allShows) {
             show.date = dates[this.nameHash(show.Name)];
-            if(!show.date) show.date = '01/01/01';
+            if (!show.date) show.date = "01/01/01";
             // console.log(show.date);
           }
         }
@@ -223,27 +261,26 @@ export default {
       this.showAll();
     },
 
-    scrollSavedVisShowIntoView () {
+    scrollSavedVisShowIntoView() {
       this.$nextTick(() => {
-        const name = window.localStorage.getItem('lastVisShow');
+        const name = window.localStorage.getItem("lastVisShow");
         const id = this.nameHash(name);
         this.highlightName = name;
         console.log(`srolling ${id} into view`);
         const ele = document.getElementById(id);
-        if(ele) {
+        if (ele) {
           ele.scrollIntoView(true);
-          const hdrEle = document.getElementById('hdr');
-          window.scrollBy(0,-80);
-        }
-        else {
+          const hdrEle = document.getElementById("hdr");
+          window.scrollBy(0, -80);
+        } else {
           console.log(`show ${id} not in show list, finding nearest match`);
-          for(let show of this.shows) {
+          for (let show of this.shows) {
             const hash = this.nameHash(show.Name);
-            if(hash > id) {
+            if (hash > id) {
               const ele = document.getElementById(hash);
-              if(ele) {
+              if (ele) {
                 ele.scrollIntoView(true);
-                window.scrollBy(0,-160);
+                window.scrollBy(0, -160);
                 this.saveVisShow(show.Name);
               }
               break;
@@ -253,13 +290,50 @@ export default {
       });
     },
 
-    copyNameToClipboard (show) {
+    copyNameToClipboard(show) {
       const hash = this.nameHash(show.Name);
       const ele = document.getElementById(hash);
       const text = ele.innerText.trim();
       console.log(`copying ${text} to clipboard`);
-      navigator.clipboard.writeText(text)
+      navigator.clipboard.writeText(text);
       this.saveVisShow(show.Name);
+    },
+
+    async openSeriesMap(show) {
+      console.log(`copying path ${'"'+show.Path+'"'} to clipboard`);
+      navigator.clipboard.writeText('"'+show.Path+'"');
+      this.seriesMapName     = show.Name;
+      const seriesMapSeasons = [];
+      const seriesMapEpis    = [];
+      const seriesMap        = {gap:show.gap};
+      const seriesMapIn      = await emby.getSeriesMap(show.Name, show.Id);
+      console.log({seriesMapGap:seriesMap.gap});
+      for(const season of seriesMapIn) {
+        const [seasonNum, episodes] = season;
+        // console.log({seasonNum, episodes});
+        seriesMapSeasons[seasonNum] = seasonNum;
+        const seasonMap = {};
+        seriesMap[seasonNum] = seasonMap;
+        for(const episode of episodes) {
+          let [episodeNum, [played, avail, unaired]] = episode;
+          seriesMapEpis[episodeNum] = episodeNum;
+          const missing = (!played && !avail && !unaired);
+          avail = avail && !played;
+          seasonMap[episodeNum] = {played, avail, missing, unaired};
+        }
+      }
+      this.seriesMapSeasons = seriesMapSeasons.filter( 
+                                x => x !== null && x !== null);
+      this.seriesMapEpis    = seriesMapEpis.filter( 
+                                x => x !== null && x !== null).unshift('');
+      this.seriesMap = seriesMap;
+      console.log({thisSeriesMapGap:this.seriesMap.gap});
+
+      this.saveVisShow(show.Name);
+    },
+
+    closeSeriesMap() {
+      this.seriesMapName = null;
     },
 
     condFltrClick(cond) {
@@ -277,15 +351,12 @@ export default {
 
     sortShows() {
       allShows.sort((a, b) => {
-        if (this.sortByDate)
-          return a.date > b.date ? -1 : +1;
-        else if (this.sortByRecent)
-          return a.recentDate > b.recentDate ? -1 : +1;
+        if (this.sortByDate) return a.date > b.date ? -1 : +1;
+        else if (this.sortByRecent) return a.recentDate > b.recentDate ? -1 : +1;
         else {
           const aname = a.Name.replace(/The\s/i, "");
           const bname = b.Name.replace(/The\s/i, "");
-          return aname.toLowerCase() > bname.toLowerCase() 
-                  ? +1 : -1;
+          return aname.toLowerCase() > bname.toLowerCase() ? +1 : -1;
         }
       });
     },
@@ -341,27 +412,23 @@ export default {
     },
 
     async showInExternal(show, event) {
-      console.log('showInExternal', show);
+      console.log("showInExternal", show);
       this.saveVisShow(show.Name);
-      if(!show.Id.startsWith('nodb-')) {
-        if(event.ctrlKey) {
-          if(imdbWin) imdbWin.close();
+      if (!show.Id.startsWith("nodb-")) {
+        if (event.ctrlKey) {
+          if (imdbWin) imdbWin.close();
           const providers = await emby.providers(show);
-          if(providers?.Imdb) {
-            const url = 
-              `https://www.imdb.com/title/${providers.Imdb}`;
-            imdbWin = window.open(url, 'imdbWebPage');
+          if (providers?.Imdb) {
+            const url = `https://www.imdb.com/title/${providers.Imdb}`;
+            imdbWin = window.open(url, "imdbWebPage");
           }
-        }
-        else {
-          if(embyWin) embyWin.close();
-          embyWin =
-            window.open(emby.embyPageUrl(show.Id), 'embyWebPage');
+        } else {
+          if (embyWin) embyWin.close();
+          embyWin = window.open(emby.embyPageUrl(show.Id), "embyWebPage");
         }
       }
-    }
+    },
   },
-
 
   /////////////////  MOUNTED  /////////////////
   mounted() {
@@ -369,29 +436,20 @@ export default {
       await emby.init();
       allShows = await emby.loadAllShows();
       this.shows = allShows;
-      const lastVisShow = 
-        this.nameHash(window.localStorage.getItem('lastVisShow'));
-      if(!lastVisShow) {
+      const lastVisShow = this.nameHash(window.localStorage.getItem("lastVisShow"));
+      if (!lastVisShow) {
         const name = allShows[0].Name;
         this.highlightName = name;
         this.saveVisShow(name);
-      }
-      else 
-        this.scrollSavedVisShowIntoView();
+      } else this.scrollSavedVisShowIntoView();
     })();
   },
 };
 </script>
 
 <style>
-.show-row {
-  outline: thin solid;
-}
 tr:nth-child(even) {
   background-color: #f4f4f4;
-}
-.show-td {
-  outline: thin solid;
 }
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -403,6 +461,12 @@ tr:nth-child(even) {
   position: fixed;
   left: 0;
   top: 0;
+}
+#map {
+  border: 1px solid black;
+  position: fixed;
+  left: 50px;
+  top: 100px;
 }
 
 #lbl {

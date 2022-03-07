@@ -29,8 +29,21 @@ export async function providers (show) {
   return item?.ProviderIds;
 }
 
+let gaps;
+
 export async function init() {
   await getToken('MARK', '90-NBVcvbasd');
+  const gapsGet = 
+  gaps = (await axios.get('http://hahnca.com/tv/gaps')).data;
+}
+
+export const addGap = async (series, gapSeason, gapEpisode) => {
+  gaps[series] = [gapSeason, gapEpisode];
+  const config = {
+    method: 'post',
+    url: `http://hahnca.com/tv/gap/${series}/${gapSeason}/${gapEpisode}`
+  };
+  await axios(config);
 }
 
 export async function loadDates() {
@@ -43,7 +56,67 @@ export async function recentDates() {
         'http://hahnca.com/tv/recentDates')).data;
 }
 
+export const getSeriesMap = async (series, seriesId) => { 
+  const seriesMap = [];
+  const seasonsRes = await axios.get(childrenUrl(seriesId));
+  for(let key in seasonsRes.data.Items) {
+    let item = seasonsRes.data.Items[key];
+    const season = +item.IndexNumber;
+    // console.log('getMap season', {season, item});
+
+    const unaired = {};
+    const unairedRes = await axios.get(childrenUrl(item.Id, true));
+    for(let key in unairedRes.data.Items) {
+      let item = unairedRes.data.Items[key];
+      const episode = +item.IndexNumber;
+      unaired[episode] = true;
+    }
+    // console.log('getMap unaired', {unaired});
+
+    const episodes = [];
+    const episodeRes = await axios.get(childrenUrl(item.Id));
+    for(let key in episodeRes.data.Items) {
+      let item = episodeRes.data.Items[key];
+      const episode = +item.IndexNumber;
+      // console.log('getMap episode', {episode, item});
+      episodes.push( [episode, [ !!item?.UserData?.Played, 
+                                   item?.LocationType != "Virtual",
+                                 !!unaired[episode] ] ]);
+    }
+    seriesMap.push([season, episodes]);
+  }
+  return seriesMap;
+}
+
+export const findGap = async (series, seriesId) => { 
+  const [gapSeason, gapEpisode] = gaps[series] || [-1,-1];
+  let haveNotAvail = false;
+
+  const seasonsRes = await axios.get(childrenUrl(seriesId));
+  for(let key in seasonsRes.data.Items) {
+    let item = seasonsRes.data.Items[key];
+    const season = +item.IndexNumber;
+    if(season < gapSeason) continue;
+
+    const episRes = await axios.get(childrenUrl(item.Id));
+    for(let key in episRes.data.Items) {
+      let item = episRes.data.Items[key];
+      const episode = +item.IndexNumber;
+      if(season == gapSeason && episode < gapEpisode) continue;
+
+      const avail = (item?.UserData?.Played || item.LocationType != "Virtual");
+      if(!avail) haveNotAvail = true;
+      else if(haveNotAvail) {
+        console.log( `found gap in ${series}, S${season}E${episode}`);
+        return([season,episode]);
+      }
+    }
+  }
+  return null;
+}
+
 export async function loadAllShows() {
+  console.log('entering loadAllShows');
   const showsRes = await axios.get(showListUrl());
   const shows = [];
   for(let key in showsRes.data.Items) {
@@ -52,18 +125,16 @@ export async function loadAllShows() {
     delete item.UserData;
     for(const k of ['DateCreated', 'PremiereDate'])
       if(item[k]) item[k] = item[k].replace(/T.*/, '');
-    // if(item.Name == 'Everybody Loves Raymond')
-    if(item.ExternalUrls.length > 0)
-      console.log(item.Name, item.ExternalUrls);
+    // if(item.ExternalUrls.length > 0)
+    //   console.log(item.Name, item.ExternalUrls);
+    const gap = await findGap(item.Name, item.Id);
+    if(gap) item.gap = gap;
     shows.push(item);
   }
-  // console.log(shows);
-  const showNames = shows.map(show => show.Name);
-  
   const pickups = (await axios.get(
         'http://hahnca.com/tv/series.json')).data;
+  const showNames = shows.map(show => show.Name);
   for(let pickup of pickups) {
-    // console.log(pickup);
     let gotPickup = false;
     for(let showName of showNames) {
       if(showName == pickup) {
@@ -78,7 +149,6 @@ export async function loadAllShows() {
         Pickup:true,
         Id:   'nodb-' + Math.random(),
       });
-      // console.log('added', shows[shows.length-1]);
     }
   }
   const collRes = await axios.get(toTryListUrl());
@@ -93,9 +163,7 @@ export async function loadAllShows() {
     const bname = b.Name.replace(/The\s/i, '');
     return (aname.toLowerCase() > bname.toLowerCase() ? +1 : -1);
   });
-
   console.log('all shows loaded');
-  // console.log(shows);
   return shows;
 }
 
@@ -149,9 +217,7 @@ export async function togglePickUp(name, pickup) {
 
 export async function deleteShowFromEmby(id) {
   const delRes = await axios.delete(deleteShowUrl(id));
-  console.log({delRes});
   const res = delRes.status;
-  console.log('deleteShowFromEmby', res);
   let err = 'ok';
   if(res != 204) {
     err = 'Error: unable to delete show. ' +
@@ -173,15 +239,11 @@ export async function toggleToTry(id, inToTry) {
         `Error toggleToTry, id:${id}, inToTry:${inToTry}`);
     return inToTry; 
   } 
-  console.log(toTryRes);
-  if(toTryRes.status !== 204) {
-    console.log(
-        `Error toggleToTry, id:${id}, stat:${toTryRes.status}`);
-    return inToTry;
-  }
+  if(toTryRes.status !== 204) return inToTry;
   console.log(`toggled inToTry to ${!inToTry}`);
   return !inToTry;
 }
+
 
 /////////////////////  URLS  ///////////////////////
 function showListUrl (startIdx=0, limit=10000) {
@@ -196,10 +258,20 @@ function showListUrl (startIdx=0, limit=10000) {
              UnplayedItemCount %2c DateCreated       %2c 
              ExternalUrls      %2c Genres            %2c 
              Overview          %2c Path              %2c 
-             People            %2c PremiereDate
+             People            %2c PremiereDate      %2c 
+             IsUnaired
     &StartIndex=${startIdx}
     &ParentId=4514ec850e5ad0c47b58444e17b6346c
     &Limit=${limit}
+    &X-Emby-Token=${token}
+  `.replace(/\s*/g, "");
+}
+
+function childrenUrl (parentId = '', unAired = false) {
+  return `http://hahnca.com:8096 / emby
+      / Users / 894c752d448f45a3a1260ccaabd0adff / Items /
+    ?ParentId=${parentId}
+    ${unAired ? '&IsUnaired = true' : ''}
     &X-Emby-Token=${token}
   `.replace(/\s*/g, "");
 }
