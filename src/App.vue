@@ -53,10 +53,12 @@ div
           font-awesome-icon(:icon="cond.icon"
               :style="{color:condColor(show,cond)}")
 
-  #map(v-if="seriesMapName !== null" 
-        style="width:60%; background-color:#eee; padding:20px;"
-        @click="closeSeriesMap()")
-    div {{seriesMapName}}
+  #map(v-if="mapShow !== null" 
+        style="width:60%; background-color:#eee; padding:20px;")
+    //- div(style="display:inline-block;")x {{mapShow.Name}} 
+    div(style="margin:3px 10px; display:inline-block;")
+      button(@click="gapClick(mapShow)") gap chk
+      button(@click="closeSeriesMap()")  close
     table(style="padding:0 5px; width:100%; font-size:14px" )
       tr(style="font-weight:bold;")
         td
@@ -96,21 +98,8 @@ export default {
   name: "App",
   components: { FontAwesomeIcon },
   data() {
-    const gapClick = async (show) => {
-      this.saveVisShow(show.Name);
-      if (show.gap) {
-        await emby.setGapChkStart(show.Name, show.gap);
-        show.gapChkStart = show.gap;
-        const gap = await emby.findGap(show.Name, show.Id);
-        if(gap) {
-          show.gap = gap;
-          console.log("updated gap", { series: show.Name, gap});
-        }
-        else {
-          delete show.gap;
-          console.log("deleted gap in", show.Name);
-        }
-      }
+    const dataGapClick = async (show) => {
+      this.gapClick(show);
     };
 
     const toggleFavorite = async (show) => {
@@ -166,7 +155,7 @@ export default {
       sortByRecent:  false,
       highlightName:    "",
       allShowsLength:    0,
-      seriesMapName:  null,
+      mapShow:        null,
       seriesMapSeasons: [],
       seriesMapEpis:    [],
       seriesMap:        {},
@@ -193,8 +182,7 @@ export default {
         }, {
           color: "#f88", filter: 0, icon: ["fas", "minus"],
           cond(show) { return !!show.gap; },
-          click(show) { gapClick(show);
-          },
+          click(show) { dataGapClick(show); },
         }, {
           color: "lime", filter: 0, icon: ["fas", "question"],
           cond(show) { return show.InToTry; },
@@ -218,6 +206,25 @@ export default {
 
   /////////////  METHODS  ////////////
   methods: {
+
+    async gapClick(show) {
+      this.saveVisShow(show.Name);
+      if (show.gap) {
+        await emby.setGapChkStart(show.Name, show.gap);
+        show.gapChkStart = show.gap;
+        const gap = await emby.findGap(show.Name, show.Id);
+        if(gap) {
+          show.gap = gap;
+          console.log("updated gap", { series: show.Name, gap});
+        }
+        else {
+          delete show.gap;
+          console.log("deleted gap in", show.Name);
+        }
+      }
+      this.openSeriesMap(show);
+    },
+
     nameHash(name) {
       this.allShowsLength = allShows.length;
       return (
@@ -296,18 +303,14 @@ export default {
     },
 
     copyNameToClipboard(show) {
-      const hash = this.nameHash(show.Name);
-      const ele = document.getElementById(hash);
-      const text = ele.innerText.trim();
-      console.log(`copying ${text} to clipboard`);
-      navigator.clipboard.writeText(text);
+      console.log(`copying ${show.Name} to clipboard`);
+      navigator.clipboard.writeText(show.Name);
       this.saveVisShow(show.Name);
     },
 
     async openSeriesMap(show) {
-      console.log(`copying path ${'"'+show.Path+'"'} to clipboard`);
-      navigator.clipboard.writeText('"'+show.Path+'"');
-      this.seriesMapName     = show.Name;
+      this.copyNameToClipboard(show);
+      this.mapShow           = show;
       const seriesMapSeasons = [];
       const seriesMapEpis    = [];
       const seriesMap        = {gap:show.gap, gcs:show.gapChkStart};
@@ -338,7 +341,7 @@ export default {
     },
 
     closeSeriesMap() {
-      this.seriesMapName = null;
+      this.mapShow = null;
     },
 
     condFltrClick(cond) {
