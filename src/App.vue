@@ -65,8 +65,8 @@ div
       tr(v-for="season in seriesMapSeasons" key="season" style="outline:thin solid;")
         td(style="font-weight:bold; width:20px; text-align:left;") {{season}}
         td(v-for="episode in seriesMapEpis" 
-           :style="{width:'30px', textAlign:'center', backgroundColor:(seriesMap?.[season]?.[episode]?.missing ? 'red' : (seriesMap?.gap?.[0] == season && seriesMap?.gap?.[1] == episode ? 'yellow' : 'white'))}"
-              key="episode")
+             :style="{width:'30px', textAlign:'center', backgroundColor:( seriesMap?.[season]?.[episode]?.missing ? '#f88' : (seriesMap?.gap?.[0] == season && seriesMap?.gap?.[1] == episode ? 'yellow' : (seriesMap?.gcs?.[0] == season && seriesMap?.gcs?.[1] == episode ? '#8f8' : 'white') ) ) }"
+           key="episode")
           span(v-if="seriesMap?.[season]?.[episode]?.played")  p
           span(v-if="seriesMap?.[season]?.[episode]?.avail")   +
           span(v-if="seriesMap?.[season]?.[episode]?.missing") -
@@ -96,14 +96,19 @@ export default {
   name: "App",
   components: { FontAwesomeIcon },
   data() {
-    const findGap = async (show) => {
+    const gapClick = async (show) => {
       this.saveVisShow(show.Name);
       if (show.gap) {
-        await emby.addGap(show.Name, show.gap[0], show.gap[1]);
+        await emby.setGapChkStart(show.Name, show.gap);
+        show.gapChkStart = show.gap;
         const gap = await emby.findGap(show.Name, show.Id);
-        if (gap) {
+        if(gap) {
           show.gap = gap;
-          console.log("updated gap", { series: show.Name, gap: show.gap });
+          console.log("updated gap", { series: show.Name, gap});
+        }
+        else {
+          delete show.gap;
+          console.log("deleted gap in", show.Name);
         }
       }
     };
@@ -188,7 +193,7 @@ export default {
         }, {
           color: "#f88", filter: 0, icon: ["fas", "minus"],
           cond(show) { return !!show.gap; },
-          click(show) { findGap(show);
+          click(show) { gapClick(show);
           },
         }, {
           color: "lime", filter: 0, icon: ["fas", "question"],
@@ -305,7 +310,7 @@ export default {
       this.seriesMapName     = show.Name;
       const seriesMapSeasons = [];
       const seriesMapEpis    = [];
-      const seriesMap        = {gap:show.gap};
+      const seriesMap        = {gap:show.gap, gcs:show.gapChkStart};
       const seriesMapIn      = await emby.getSeriesMap(show.Name, show.Id);
       console.log({seriesMapGap:seriesMap.gap});
       for(const season of seriesMapIn) {

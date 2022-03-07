@@ -29,19 +29,19 @@ export async function providers (show) {
   return item?.ProviderIds;
 }
 
-let gaps;
+let gapChkStarts;
 
 export async function init() {
   await getToken('MARK', '90-NBVcvbasd');
-  const gapsGet = 
-  gaps = (await axios.get('http://hahnca.com/tv/gaps')).data;
+  gapChkStarts = (await axios.get('http://hahnca.com/tv/gapChkStarts.json')).data;
 }
 
-export const addGap = async (series, gapSeason, gapEpisode) => {
-  gaps[series] = [gapSeason, gapEpisode];
+export const setGapChkStart = async (series, gapChkStart) => {
+  gapChkStarts[series]   = gapChkStart;
+  const [gcsSea, gcsEpi] = gapChkStart;
   const config = {
     method: 'post',
-    url: `http://hahnca.com/tv/gap/${series}/${gapSeason}/${gapEpisode}`
+    url: `http://hahnca.com/tv/gapChkStart/${series}/${gcsSea}/${gcsEpi}`
   };
   await axios(config);
 }
@@ -62,8 +62,6 @@ export const getSeriesMap = async (series, seriesId) => {
   for(let key in seasonsRes.data.Items) {
     let item = seasonsRes.data.Items[key];
     const season = +item.IndexNumber;
-    // console.log('getMap season', {season, item});
-
     const unaired = {};
     const unairedRes = await axios.get(childrenUrl(item.Id, true));
     for(let key in unairedRes.data.Items) {
@@ -71,14 +69,11 @@ export const getSeriesMap = async (series, seriesId) => {
       const episode = +item.IndexNumber;
       unaired[episode] = true;
     }
-    // console.log('getMap unaired', {unaired});
-
     const episodes = [];
     const episodeRes = await axios.get(childrenUrl(item.Id));
     for(let key in episodeRes.data.Items) {
       let item = episodeRes.data.Items[key];
       const episode = +item.IndexNumber;
-      // console.log('getMap episode', {episode, item});
       episodes.push( [episode, [ !!item?.UserData?.Played, 
                                    item?.LocationType != "Virtual",
                                  !!unaired[episode] ] ]);
@@ -89,20 +84,20 @@ export const getSeriesMap = async (series, seriesId) => {
 }
 
 export const findGap = async (series, seriesId) => { 
-  const [gapSeason, gapEpisode] = gaps[series] || [-1,-1];
+  const [gcsSea, gcsEpi] = gapChkStarts[series] || [-1,-1];
   let haveNotAvail = false;
 
   const seasonsRes = await axios.get(childrenUrl(seriesId));
   for(let key in seasonsRes.data.Items) {
     let item = seasonsRes.data.Items[key];
     const season = +item.IndexNumber;
-    if(season < gapSeason) continue;
+    if(season < gcsSea) continue;
 
     const episRes = await axios.get(childrenUrl(item.Id));
     for(let key in episRes.data.Items) {
       let item = episRes.data.Items[key];
       const episode = +item.IndexNumber;
-      if(season == gapSeason && episode < gapEpisode) continue;
+      if(season == gcsSea && episode < gcsEpi) continue;
 
       const avail = (item?.UserData?.Played || item.LocationType != "Virtual");
       if(!avail) haveNotAvail = true;
@@ -129,6 +124,8 @@ export async function loadAllShows() {
     //   console.log(item.Name, item.ExternalUrls);
     const gap = await findGap(item.Name, item.Id);
     if(gap) item.gap = gap;
+    const gapChkStart = gapChkStarts[item.Name];
+    if(gapChkStart) item.gapChkStart = gapChkStart;
     shows.push(item);
   }
   const pickups = (await axios.get(
