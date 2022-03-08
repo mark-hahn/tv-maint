@@ -1,1 +1,1 @@
-npm run serve -- --port 3000
+nohup npm run serve -- --port 3000 &
