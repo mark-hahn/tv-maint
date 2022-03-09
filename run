@@ -1,1 +1,2 @@
-nohup npm run serve -- --port 3000 &
+cd ~/dev/apps/tv-maint
+nohup serve -s dist &
