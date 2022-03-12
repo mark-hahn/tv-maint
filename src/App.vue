@@ -108,14 +108,25 @@ export default {
       // if (show.Id.startsWith("nodb-")) console.log(show);
     };
 
+    const toggleReject = async (show) => {
+      this.saveVisShow(show.Name);
+      show.Reject = await emby.toggleReject(show.Name, show.Reject);
+      if (!show.Reject && show.Id.startsWith("nodb-")) {
+        console.log("toggled reject, removing row");
+        const id = show.Id;
+        allShows   = allShows.filter(  (show) => show.Id != id);
+        this.shows = this.shows.filter((show) => show.Id != id);
+      }
+    };
+
     const togglePickup = async (show) => {
       this.saveVisShow(show.Name);
       show.Pickup = await emby.togglePickUp(show.Name, show.Pickup);
       if (!show.Pickup && show.Id.startsWith("nodb-")) {
         console.log("toggled pickUp, removing row");
         const id = show.Id;
-        allShows = allShows.filter((show) => show.Id != id);
-        this.shows = allShows;
+        allShows   = allShows.filter(  (show) => show.Id != id);
+        this.shows = this.shows.filter((show) => show.Id != id);
       }
     };
 
@@ -132,7 +143,7 @@ export default {
       const id = show.Id;
       const res = await emby.deleteShowFromEmby(id);
       if (res != "ok") return;
-      if (show.Pickup) {
+      if (show.Pickup || show.Reject) {
         delete show.Genres;
         show.RunTimeTicks = 0;
         show.UnplayedItemCount = 0;
@@ -141,8 +152,8 @@ export default {
         console.log("deleted db, keeping row");
       } else {
         console.log("deleted db, removing row");
-        allShows = allShows.filter((show) => show.Id != id);
-        this.shows = allShows;
+        allShows   = allShows.filter(  (show) => show.Id != id);
+        this.shows = this.shows.filter((show) => show.Id != id);
         this.scrollSavedVisShowIntoView();
       }
     };
@@ -162,11 +173,11 @@ export default {
 
       conds: [ {
           color: "teal", filter: 0, icon: ["far", "laugh-beam"],
-          cond(show) { return show.Genres?.includes("Comedy"); },
+          cond(show)  { return show.Genres?.includes("Comedy"); },
           click(show) {},
         }, {
           color: "blue", filter: 0, icon: ["far", "sad-cry"],
-          cond(show) { return show.Genres?.includes("Drama"); },
+          cond(show)  { return show.Genres?.includes("Drama"); },
           click(show) {},
         },
         // { color: "purple", filter: 0,
@@ -177,27 +188,31 @@ export default {
         // },
         {
           color: "#0cf", filter: 0, icon: ["fas", "plus"],
-          cond(show) { return show.UnplayedItemCount > 0; },
+          cond(show)  { return show.UnplayedItemCount > 0; },
           click(show) {},
         }, {
           color: "#f88", filter: 0, icon: ["fas", "minus"],
-          cond(show) { return !!show.gap; },
+          cond(show)  { return !!show.gap; },
           click(show) { dataGapClick(show); },
         }, {
           color: "lime", filter: 0, icon: ["fas", "question"],
-          cond(show) { return show.InToTry; },
+          cond(show)  { return show.InToTry; },
           click(show) { toggleToTry(show); },
         }, {
           color: "red", filter: 0, icon: ["far", "heart"],
-          cond(show) { return show.IsFavorite; },
+          cond(show)  { return show.IsFavorite; },
           click(show) { toggleFavorite(show); },
         }, {
+          color: "red", filter: 0, icon: ["fas", "arrow-down"],
+          cond(show)  { return show.Reject; },
+          click(show) { toggleReject(show); },
+        }, {
           color: "#5ff", filter: 0, icon: ["fas", "arrow-down"],
-          cond(show) { return show.Pickup; },
+          cond(show)  { return show.Pickup; },
           click(show) { togglePickup(show); },
         }, {
           color: "#a66", filter: 0, icon: ["fas", "tv"],
-          cond(show) { return !show.Id.startsWith("nodb-"); },
+          cond(show)  { return !show.Id.startsWith("nodb-"); },
           click(show) { deleteShowFromEmby(show); },
         },
       ],
@@ -372,7 +387,7 @@ export default {
     addPickUp() {
       const name = this.pkupEditName;
       if (allShows.some((show) => show.Name == name)) {
-        console.log("skipping duplicate show name", name);
+        console.log("addPickUp: skipping duplicate show name", name);
         return;
       }
       if (name && emby.addPickUp(name)) {
@@ -400,7 +415,7 @@ export default {
       this.shows = allShows.filter((show) => {
         if (srchStrLc && !show.Name.toLowerCase().includes(srchStrLc)) return false;
         for (let cond of this.conds) {
-          if (cond.filter == 0) continue;
+          if ( cond.filter ==  0) continue;
           if ((cond.filter == +1) != cond.cond(show)) return false;
         }
         return true;
