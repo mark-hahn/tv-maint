@@ -128,9 +128,28 @@ export async function loadAllShows() {
     if(gapChkStart) item.gapChkStart = gapChkStart;
     shows.push(item);
   }
-  const pickups = (await axios.get(
-        'http://hahnca.com/tv/series.json')).data;
   const showNames = shows.map(show => show.Name);
+  const rejects = (await axios.get(
+        'http://hahnca.com/tv/rejects.json')).data;
+  for(let reject of rejects) {
+    let gotReject = false;
+    for(let showName of showNames) {
+      if(showName == reject) {
+        const show = shows.find(show => show.Name == showName);
+        show.Reject = true;
+        gotReject = true;
+      }
+    }
+    if(!gotReject) {
+      shows.push( {
+        Name:  reject,
+        Reject:true,
+        Id:   'nodb-' + Math.random(),
+      });
+    }
+  }
+  const pickups = (await axios.get(
+        'http://hahnca.com/tv/pickups.json')).data;
   for(let pickup of pickups) {
     let gotPickup = false;
     for(let showName of showNames) {
@@ -175,6 +194,25 @@ export async function toggleFav(id, isFav) {
   return (favRes.status == 200 ? favRes.data.IsFavorite : isFav);
 }
 
+export async function addReject(name) {
+  if(name == "") return false;
+  const config = {
+    method: 'post',
+    url: `http://hahnca.com/tv/reject/` + encodeURI(name),
+  };
+  let rejectRes;
+  let err = null;
+  try { rejectRes = await axios(config); }
+  catch (e) { err = e.message; }
+  if(err || rejectRes?.data !== 'ok') {
+    if(!err) err = rejectRes?.data;
+    alert('Error: unable to add reject to server. ' +
+          'Please tell mark.\n\nError: ' + err);
+    return false;
+  }
+  return true;
+}
+
 export async function addPickUp(name) {
   if(name == "") return false;
   const config = {
@@ -192,6 +230,24 @@ export async function addPickUp(name) {
     return false;
   }
   return true;
+}
+
+export async function toggleReject(name, reject) {
+  const config = {
+    method: (reject ? 'delete' : 'post'),
+    url:    `http://hahnca.com/tv/reject/` + encodeURI(name),
+  };
+  let rejectRes;
+  try { rejectRes = await axios(config); }
+  catch (e) { return reject; }
+  if(rejectRes.data !== 'ok') {
+    alert('Error: unable to save change to server. ' +
+          'Please tell mark.\n\nError: ' + rejectRes.data);
+    return reject;
+  }
+  else {
+    return !reject;
+  }
 }
 
 export async function togglePickUp(name, pickup) {
