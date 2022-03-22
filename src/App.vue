@@ -82,11 +82,12 @@ import { library }         from "@fortawesome/fontawesome-svg-core";
 import { faLaughBeam, faSadCry, faClock, faHeart, } 
                            from "@fortawesome/free-regular-svg-icons"; 
 import { faCheck, faPlus, faMinus, faArrowDown, 
-         faTv, faSearch, faQuestion, faCopy, faBorderAll} 
+         faTv, faSearch, faQuestion, faCopy, faBorderAll, faBan} 
                            from "@fortawesome/free-solid-svg-icons";
 library.add([  
   faLaughBeam, faSadCry, faClock, faHeart, faCheck, faPlus, 
-  faMinus, faArrowDown, faTv, faSearch, faQuestion, faCopy, faBorderAll, ]);
+  faMinus, faArrowDown, faTv, faSearch, faQuestion, faCopy, 
+  faBan, faBorderAll, ]);
  
 let allShows = [];
 let dates = null;
@@ -203,7 +204,7 @@ export default {
           cond(show)  { return show.IsFavorite; },
           click(show) { toggleFavorite(show); },
         }, {
-          color: "red", filter: 0, icon: ["fas", "arrow-down"],
+          color: "red", filter: 0, icon: ["fas", "ban"],
           cond(show)  { return show.Reject; },
           click(show) { toggleReject(show); },
         }, {

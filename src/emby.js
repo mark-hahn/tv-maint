@@ -198,7 +198,7 @@ export async function addReject(name) {
   if(name == "") return false;
   const config = {
     method: 'post',
-    url: `http://hahnca.com/tv/reject/` + encodeURI(name),
+    url: `http://hahnca.com/tv/rejects/` + encodeURI(name),
   };
   let rejectRes;
   let err = null;
@@ -217,7 +217,7 @@ export async function addPickUp(name) {
   if(name == "") return false;
   const config = {
     method: 'post',
-    url: `http://hahnca.com/tv/pickup/` + encodeURI(name),
+    url: `http://hahnca.com/tv/pickups/` + encodeURI(name),
   };
   let pickUpRes;
   let err = null;
@@ -235,7 +235,7 @@ export async function addPickUp(name) {
 export async function toggleReject(name, reject) {
   const config = {
     method: (reject ? 'delete' : 'post'),
-    url:    `http://hahnca.com/tv/reject/` + encodeURI(name),
+    url:    `http://hahnca.com/tv/rejects/` + encodeURI(name),
   };
   let rejectRes;
   try { rejectRes = await axios(config); }
@@ -253,7 +253,7 @@ export async function toggleReject(name, reject) {
 export async function togglePickUp(name, pickup) {
   const config = {
     method: (pickup ? 'delete' : 'post'),
-    url:    `http://hahnca.com/tv/pickup/` + encodeURI(name),
+    url:    `http://hahnca.com/tv/pickups/` + encodeURI(name),
   };
   let pickUpRes;
   try { pickUpRes = await axios(config); }
